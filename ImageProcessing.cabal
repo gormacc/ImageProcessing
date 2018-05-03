@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 48ad3ed8c9ab4e24174b01f061b68b12626df410dd783d1acb6fbdcae0b092e0
+-- hash: 0784103174c8884c858634f3445422014e6c6bb0bcfcc362a9317d8be189949f
 
 name:           ImageProcessing
 version:        0.1.0.0
@@ -38,6 +38,7 @@ library
 executable ImageProcessing-exe
   main-is: Main.hs
   other-modules:
+      CommandHelper
       Paths_ImageProcessing
   hs-source-dirs:
       app
