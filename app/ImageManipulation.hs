@@ -34,4 +34,4 @@ myReadImage fun = do
     case eimg of
         Left err -> putStrLn ("Nie można było odczytać pliku: " ++ err)
         Right (ImageRGB8 img) -> (savePngImage path' . ImageRGB8 . fun) img
-        Right _ -> putStrLn "Nieznany format pikseli"
+        Right dimg ->putStrLn "Możliwa strata jakości obrazu" >> (savePngImage path' . ImageRGB8 . fun . convertRGB8) dimg
