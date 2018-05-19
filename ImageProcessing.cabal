@@ -20,6 +20,18 @@ extra-source-files:
     ChangeLog.md
     README.md
 
+data-files:
+  bitmaps/computer.ico
+  bitmaps/disk.ico
+  bitmaps/eye.ico
+  bitmaps/file.ico
+  bitmaps/fileopen16.png
+  bitmaps/f_closed.ico
+  bitmaps/f_open.ico
+  bitmaps/hsicon.ico
+  bitmaps/wxwin.ico
+  bitmaps/wxwin16.png
+
 source-repository head
   type: git
   location: https://github.com/githubuser/ImageProcessing
@@ -33,7 +45,10 @@ library
       src
   build-depends:
       JuicyPixels,
-      base >=4.7 && <5
+      base,
+      reactive-banana ,
+      wxcore,
+      wx
   default-language: Haskell2010
 
 executable ImageProcessing-exe
@@ -48,7 +63,10 @@ executable ImageProcessing-exe
   build-depends:
       JuicyPixels
     , ImageProcessing
-    , base >=4.7 && <5
+    , base
+    , reactive-banana
+    , wxcore
+    , wx
   default-language: Haskell2010
 
 test-suite ImageProcessing-test
@@ -62,5 +80,5 @@ test-suite ImageProcessing-test
   build-depends:
       JuicyPixels
     , ImageProcessing
-    , base >=4.7 && <5
+    , base
   default-language: Haskell2010
