@@ -53,6 +53,23 @@ rotate270 img@Image {..} = runST $ do
             go (x + 1) y
   go 0 0
 
+grayscale :: Image PixelRGB8 -> Image PixelRGB8
+grayscale = pixelMap grayFunction where
+  grayFunction (PixelRGB8 r g b) = PixelRGB8 val val val where
+    val = truncate ( (fromIntegral (r + g + b)) / 3) 
+
+brighten :: Image PixelRGB8 -> Image PixelRGB8
+brighten = pixelMap brightFunction
+      where up v = fromIntegral (fromIntegral v + 1)
+            brightFunction (PixelRGB8 r g b) =
+                    PixelRGB8 (min (up r)  255) (min (up g) 255) (min (up b) 255)
+
+darken :: Image PixelRGB8 -> Image PixelRGB8
+darken = pixelMap darkFunction
+      where down v = fromIntegral (fromIntegral v - 1)
+            darkFunction (PixelRGB8 r g b) =
+                    PixelRGB8 (max (down r)  0) (max (down g) 0) (max (down b) 0)
+
 myReadImage :: ( Image PixelRGB8 -> Image PixelRGB8 ) -> IO () 
 myReadImage fun = do
     path <- askForData "Podaj ścieżkę pliku : "
