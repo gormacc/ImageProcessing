@@ -5,6 +5,8 @@ import Graphics.UI.WX
 
 import CommandHelper
 
+import Paths_ImageProcessing
+
 -- mainLoop :: IO ()
 -- mainLoop = do
 --     putStrLn "Wpisz komendę..."
