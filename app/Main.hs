@@ -2,6 +2,7 @@ module Main where
 
 import Control.Exception (onException)
 import Graphics.UI.WX 
+import Graphics.UI.WXCore 
 
 import CommandHelper
 
@@ -41,10 +42,10 @@ imageViewer
        f      <- frame [text := "ImageViewer", picture := image_, fullRepaintOnResize := False]
 
        -- use a mutable variable to hold the image
-       vbitmap <- variable [value := Nothing]
+       vimage <- variable [value := Nothing]
 
        -- add a scrollable window widget in the frame
-       sw     <- scrolledWindow f [scrollRate := sz 10 10, on paint := onPaint vbitmap
+       sw     <- scrolledWindow f [scrollRate := sz 10 10, on paint := onPaint vimage
                                   ,bgcolor := white, fullRepaintOnResize := False]
 
        -- create file menu
@@ -77,48 +78,48 @@ imageViewer
              ,outerSize        := sz 400 300    -- niceness
              ,on (menu about)  := infoDialog f "About ImageViewer" "This is a wxHaskell demo"
              ,on (menu quit)   := close f
-             ,on (menu open)   := onOpen f sw vbitmap mclose status 
-             ,on (menu mclose) := onClose  sw vbitmap mclose status
+             ,on (menu open)   := onOpen f sw vimage mclose status 
+             ,on (menu mclose) := onClose  sw vimage mclose status
 
              -- nice close down, but no longer necessary as bitmaps are managed automatically.
-             ,on closing       :~ \previous -> do{ closeImage vbitmap; previous }
+             ,on closing       :~ \previous -> do{ closeImage vimage; previous }
              ]
   where
-    onOpen :: Frame a -> ScrolledWindow b -> Var (Maybe (Bitmap ())) -> MenuItem c -> StatusField -> IO ()
-    onOpen f sw vbitmap mclose status
+    onOpen :: Frame a -> ScrolledWindow b -> Var (Maybe (Image ())) -> MenuItem c -> StatusField -> IO ()
+    onOpen f sw vimage mclose status
       = do mbfname <- fileOpenDialog f False {- change current directory -} True "Open image" imageFiles "" ""
            case mbfname of
              Nothing    -> return ()
-             Just fname -> openImage sw vbitmap mclose status fname
+             Just fname -> openImage sw vimage mclose status fname
 
-    onClose sw vbitmap mclose status
-      = do closeImage vbitmap
+    onClose sw vimage mclose status
+      = do closeImage vimage
            set mclose [enabled := False]
            set sw     [virtualSize := sz 0 0]
            set status [text := ""]
            repaint sw
 
-    closeImage vbitmap
-      = do mbBitmap <- swap vbitmap value Nothing
-           case mbBitmap of
+    closeImage vimage
+      = do mbImage <- swap vimage value Nothing
+           case mbImage of
              Nothing -> return ()
-             Just bm -> objectDelete bm
+             Just im -> objectDelete im
 
-    openImage sw vbitmap mclose status fname
+    openImage sw vimage mclose status fname
       = do -- load the new bitmap
-           bm <- bitmapCreateFromFile fname  -- can fail with exception
-           closeImage vbitmap
-           set vbitmap [value := Just bm]
+           im <- imageCreateFromFile fname  -- can fail with exception
+           closeImage vimage
+           set vimage [value := Just im]
            set mclose [enabled := True]
            set status [text := fname]
            -- reset the scrollbars 
-           bmsize <- get bm size
-           set sw [virtualSize := bmsize]
+           imsize <- get im size
+           set sw [virtualSize := imsize]
            repaint sw
        `onException` repaint sw
 
-    onPaint vbitmap dc _viewArea
-      = do mbBitmap <- get vbitmap value
-           case mbBitmap of
+    onPaint vimage dc _viewArea
+      = do mbImage <- get vimage value
+           case mbImage of
              Nothing -> return () 
-             Just bm -> drawBitmap dc bm pointZero False []
+             Just im -> drawImage dc im pointZero []
