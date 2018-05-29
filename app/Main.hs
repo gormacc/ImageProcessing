@@ -5,7 +5,7 @@ import Graphics.UI.WX
 import Graphics.UI.WXCore 
 
 import CommandHelper
-
+import Convertion 
 import Paths_ImageProcessing
 
 -- mainLoop :: IO ()
@@ -52,6 +52,7 @@ imageViewer
        file   <- menuPane      [text := "&File"]
        mclose <- menuItem file [text := "&Close\tCtrl+C", help := "Close the image", enabled := False]
        open   <- menuItem file [text := "&Open\tCtrl+O",  help := "Open an image"]
+       test   <- menuItem file [text := "&Test", help := "Test"]
        menuLine file
        quit   <- menuQuit file [help := "Quit the demo"]
 
@@ -65,6 +66,7 @@ imageViewer
        abimg  <- getDataFileName "bitmaps/wxwin16.png"
        _      <- toolMenu tbar open  "Open"  foimg []
        _      <- toolMenu tbar about "About" abimg []
+       _      <- toolMenu tbar test  "Test"  abimg []
 
        -- create statusbar field
        status <- statusField   [text := "Welcome to the wxHaskell ImageViewer"]
@@ -80,6 +82,7 @@ imageViewer
              ,on (menu quit)   := close f
              ,on (menu open)   := onOpen f sw vimage mclose status 
              ,on (menu mclose) := onClose  sw vimage mclose status
+             ,on (menu test)   := onTest vimage
 
              -- nice close down, but no longer necessary as bitmaps are managed automatically.
              ,on closing       :~ \previous -> do{ closeImage vimage; previous }
@@ -98,6 +101,12 @@ imageViewer
            set sw     [virtualSize := sz 0 0]
            set status [text := ""]
            repaint sw
+
+    onTest vimage 
+      = do mbImage <- swap vimage value Nothing
+           case mbImage of
+              Nothing -> return ()
+              Just im -> saveToPng im
 
     closeImage vimage
       = do mbImage <- swap vimage value Nothing
