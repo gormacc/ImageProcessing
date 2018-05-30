@@ -1,6 +1,7 @@
+{-# LANGUAGE RecordWildCards #-}
+
 module Convertion where
 
-import Control.Exception (onException)
 import Graphics.UI.WX 
 import Graphics.UI.WXCore as W
 import Codec.Picture
@@ -8,15 +9,14 @@ import Control.Monad
 import Control.Monad.ST
 import Codec.Picture.Types as J
 
-import CommandHelper
-import ImageManipulation
-import Paths_ImageProcessing
+convertToImage :: J.Image PixelRGB8 -> IO(W.Image ()) 
+convertToImage img@Image {..} = imageCreateFromPixels (sz imageWidth imageHeight) (createColorArray img imageWidth imageHeight)
 
+createColorArray :: J.Image PixelRGB8 -> Int -> Int -> [Color]
+createColorArray img width height = [ createColor (pixelAt img x y) | y <- [0..height-1], x <- [0..width-1] ]
 
-saveToPng :: W.Image () -> IO ()
-saveToPng ioimg = do
-	img <- convertToImageRGB8 ioimg
-	(savePngImage "/home/maciek/Desktop/img.png" . ImageRGB8 . rotateImg) img 
+createColor :: PixelRGB8 -> Color
+createColor pixel@(PixelRGB8 r g b) = colorRGB r g b
 
 convertToImageRGB8 :: W.Image () -> IO (J.Image PixelRGB8)
 convertToImageRGB8 img = do 

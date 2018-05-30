@@ -56,6 +56,7 @@ executable ImageProcessing-exe
   other-modules:
       CommandHelper
       ImageManipulation
+      Convertion
       Paths_ImageProcessing
   hs-source-dirs:
       app

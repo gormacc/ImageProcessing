@@ -2,22 +2,13 @@ module Main where
 
 import Control.Exception (onException)
 import Graphics.UI.WX 
-import Graphics.UI.WXCore 
+import Graphics.UI.WXCore as W
+import Codec.Picture as J
 
 import CommandHelper
 import Convertion 
 import Paths_ImageProcessing
-
--- mainLoop :: IO ()
--- mainLoop = do
---     putStrLn "Wpisz komendę..."
---     result <- readCommand
---     if result
---       then mainLoop
---       else return ()
-
--- main :: IO ()
--- main = mainLoop
+import ImageManipulation
 
 main :: IO ()
 main
@@ -82,13 +73,13 @@ imageViewer
              ,on (menu quit)   := close f
              ,on (menu open)   := onOpen f sw vimage mclose status 
              ,on (menu mclose) := onClose  sw vimage mclose status
-             ,on (menu test)   := onTest vimage
+             ,on (menu test)   := onTest sw vimage
 
              -- nice close down, but no longer necessary as bitmaps are managed automatically.
              ,on closing       :~ \previous -> do{ closeImage vimage; previous }
              ]
   where
-    onOpen :: Frame a -> ScrolledWindow b -> Var (Maybe (Image ())) -> MenuItem c -> StatusField -> IO ()
+    onOpen :: Frame a -> ScrolledWindow b -> Var (Maybe (W.Image ())) -> MenuItem c -> StatusField -> IO ()
     onOpen f sw vimage mclose status
       = do mbfname <- fileOpenDialog f False {- change current directory -} True "Open image" imageFiles "" ""
            case mbfname of
@@ -102,11 +93,19 @@ imageViewer
            set status [text := ""]
            repaint sw
 
-    onTest vimage 
+    onTest sw vimage 
       = do mbImage <- swap vimage value Nothing
            case mbImage of
               Nothing -> return ()
-              Just im -> saveToPng im
+              Just im -> do
+                img <- convertToImageRGB8 im
+                newImg <- convertToImage (rotateImg img)
+                closeImage vimage
+                set vimage [value := Just newImg]
+                imsize <- get newImg size
+                set sw [virtualSize := imsize]
+                repaint sw
+                
 
     closeImage vimage
       = do mbImage <- swap vimage value Nothing
