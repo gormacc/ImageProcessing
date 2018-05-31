@@ -8,8 +8,8 @@ import Control.Monad
 import Control.Monad.ST
 import qualified Codec.Picture.Types as M
 
-askForData :: String -> IO String
-askForData prompt = putStrLn prompt >> getLine >>= return
+-- askForData :: String -> IO String
+-- askForData prompt = putStrLn prompt >> getLine >>= return
 
 rotate180 :: Image PixelRGB8 -> Image PixelRGB8
 rotate180 img@Image {..} = runST $ do
@@ -96,12 +96,12 @@ darken = pixelMap darkFunction
             darkFunction (PixelRGB8 r g b) =
                     PixelRGB8 (max (down r)  0) (max (down g) 0) (max (down b) 0)
 
-myReadImage :: ( Image PixelRGB8 -> Image PixelRGB8 ) -> IO () 
-myReadImage fun = do
-    path <- askForData "Podaj ścieżkę pliku : "
-    path' <- askForData "Podaj ścieżkę pliku wyjściowego : "
-    eimg <- readImage path
-    case eimg of
-        Left err -> putStrLn ("Nie można było odczytać pliku: " ++ err)
-        Right (ImageRGB8 img) -> (savePngImage path' . ImageRGB8 . fun) img
-        Right dimg ->putStrLn "Możliwa strata jakości obrazu" >> (savePngImage path' . ImageRGB8 . fun . convertRGB8) dimg
+-- myReadImage :: ( Image PixelRGB8 -> Image PixelRGB8 ) -> IO () 
+-- myReadImage fun = do
+--     path <- askForData "Podaj ścieżkę pliku : "
+--     path' <- askForData "Podaj ścieżkę pliku wyjściowego : "
+--     eimg <- readImage path
+--     case eimg of
+--         Left err -> putStrLn ("Nie można było odczytać pliku: " ++ err)
+--         Right (ImageRGB8 img) -> (savePngImage path' . ImageRGB8 . fun) img
+-- Right dimg ->putStrLn "Możliwa strata jakości obrazu" >> (savePngImage path' . ImageRGB8 . fun . convertRGB8) dimg
