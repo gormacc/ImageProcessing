@@ -1,24 +1,17 @@
--- This file has been generated from package.yaml by hpack version 0.28.2.
---
--- see: https://github.com/sol/hpack
---
--- hash: 201cd23b88dcc0c33b0267741130b40392aa5541329a63b6437f64764a031575
-
-name:           ImageProcessing
-version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/ImageProcessing#readme>
-homepage:       https://github.com/githubuser/ImageProcessing#readme
-bug-reports:    https://github.com/githubuser/ImageProcessing/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2018 Author name here
-license:        BSD3
-license-file:   LICENSE
-build-type:     Simple
-cabal-version:  >= 1.10
-extra-source-files:
-    ChangeLog.md
-    README.md
+name:                ImageProcessing
+version:             0.1.0.0
+-- synopsis:
+-- description:
+homepage:            https://github.com/githubuser/ImageProcessing#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Author name here
+maintainer:          example@example.com
+copyright:           2018 Author name here
+category:            Web
+build-type:          Simple
+cabal-version:       >=1.10
+extra-source-files:  README.md
 
 data-files:
   bitmaps/computer.ico
@@ -36,49 +29,14 @@ source-repository head
   type: git
   location: https://github.com/githubuser/ImageProcessing
 
-library
-  exposed-modules:
-      Lib
-  other-modules:
-      Paths_ImageProcessing
-  hs-source-dirs:
-      src
-  build-depends:
+executable ImageProcessing
+  hs-source-dirs:      src
+  main-is:             Main.hs
+  default-language:    Haskell2010
+  build-depends:             
       JuicyPixels,
       base,
       reactive-banana ,
+      reactive-banana-wx ,
       wxcore,
       wx
-  default-language: Haskell2010
-
-executable ImageProcessing-exe
-  main-is: Main.hs
-  other-modules:
-      ImageManipulation
-      Convertion
-      Paths_ImageProcessing
-  hs-source-dirs:
-      app
-  ghc-options: -fno-warn-tabs -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      JuicyPixels
-    , ImageProcessing
-    , base
-    , reactive-banana
-    , wxcore
-    , wx
-  default-language: Haskell2010
-
-test-suite ImageProcessing-test
-  type: exitcode-stdio-1.0
-  main-is: Spec.hs
-  other-modules:
-      Paths_ImageProcessing
-  hs-source-dirs:
-      test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      JuicyPixels
-    , ImageProcessing
-    , base
-  default-language: Haskell2010
