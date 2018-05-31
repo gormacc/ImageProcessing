@@ -5,7 +5,6 @@ import Graphics.UI.WX
 import Graphics.UI.WXCore as W
 import Codec.Picture as J
 
-import CommandHelper
 import Convertion 
 import Paths_ImageProcessing
 import ImageManipulation
@@ -99,7 +98,7 @@ imageViewer
               Nothing -> return ()
               Just im -> do
                 img <- convertToImageRGB8 im
-                newImg <- convertToImage (rotateImg img)
+                newImg <- convertToImage (rotate180 img)
                 closeImage vimage
                 set vimage [value := Just newImg]
                 imsize <- get newImg size

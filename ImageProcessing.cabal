@@ -54,7 +54,6 @@ library
 executable ImageProcessing-exe
   main-is: Main.hs
   other-modules:
-      CommandHelper
       ImageManipulation
       Convertion
       Paths_ImageProcessing
