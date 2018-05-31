@@ -74,7 +74,7 @@ myRound :: Int -> Double -> Int
 myRound val sc = truncate $ sc * (fromIntegral val)
 
 revertMyRound :: Int -> Double -> Int
-revertMyRound val sc = truncate $ sc / (fromIntegral val)
+revertMyRound val sc = truncate $ (fromIntegral val) / sc
 
 grayscale :: Image PixelRGB8 -> Image PixelRGB8
 grayscale = pixelMap grayFunction where
