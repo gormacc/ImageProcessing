@@ -33,6 +33,9 @@ executable ImageProcessing
   hs-source-dirs:      src
   main-is:             Main.hs
   default-language:    Haskell2010
+  other-modules: 
+      ImageManipulation 
+      Convertion 
   build-depends:             
       JuicyPixels,
       base,
