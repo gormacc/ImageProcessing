@@ -40,10 +40,10 @@ imageViewer
        vimage <- variable [value := Nothing]
 
        -- add a scrollable window widget in the frame
-      --  sw     <- scrolledWindow f [scrollRate := sz 10 10, on paint := onPaint vimage
-      --                             ,bgcolor := white, fullRepaintOnResize := False]
+       sw     <- scrolledWindow f [scrollRate := sz 10 10, on paint := onPaint vimage
+                                  ,bgcolor := white, fullRepaintOnResize := False]
 
-       sw     <- scrolledWindow f [scrollRate := sz 10 10, bgcolor := white, fullRepaintOnResize := False]
+      --  sw     <- scrolledWindow f [scrollRate := sz 10 10, bgcolor := white, fullRepaintOnResize := False]
 
        -- create file menu
        file   <- menuPane      [text := "&File"]
@@ -88,16 +88,71 @@ imageViewer
        let networkDescription :: MomentIO ()
            networkDescription = mdo
               eAbout <- event0 tbarAbout command
+              eOpen  <- event0 tbarOpen command 
+              eTest  <- event0 tbarTest command
 
               let showAbout :: IO ()
                   showAbout = infoDialog f "About ImageViewer" "This is a wxHaskell demo"
 
               reactimate (showAbout <$ eAbout)
 
+              let closeImage :: IO ()    
+                  closeImage
+                      = do mbImage <- swap vimage value Nothing
+                           case mbImage of
+                             Nothing -> return ()
+                             Just im -> objectDelete im >> return () 
+
+              let openImage :: FilePath -> IO ()
+                  openImage fname
+                      = do -- load the new bitmap
+                          im <- imageCreateFromFile fname  -- can fail with exception
+                          closeImage
+                          set vimage [value := Just im]
+                          set mclose [enabled := True]
+                          set status [text := fname]
+                          -- reset the scrollbars 
+                          imsize <- get im size
+                          set sw [virtualSize := imsize]
+                          repaint sw
+                      `onException` repaint sw
+
+              let openClick :: IO ()
+                  openClick 
+                    = do mbfname <- fileOpenDialog f False {- change current directory -} True "Open image" imageFiles "" ""
+                         case mbfname of
+                           Nothing    -> return ()
+                           Just fname -> openImage fname
+
+              reactimate (openClick <$ eOpen)
+
+              let onTest :: IO ()
+                  onTest
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             newImg <- convertToImage (rotate180 img)
+                             closeImage
+                             set vimage [value := Just newImg]
+                             imsize <- get newImg size
+                             set sw [virtualSize := imsize]
+                             repaint sw
+
+              reactimate (onTest <$ eTest)
+
 
 
        network <- compile networkDescription
        actuate network
+
+       where 
+          onPaint vimage dc _viewArea
+            = do mbImage <- get vimage value
+                 case mbImage of
+                   Nothing -> return () 
+                   Just im -> drawImage dc im pointZero []
   -- where
   --   onOpen :: Frame a -> ScrolledWindow b -> Var (Maybe (W.Image ())) -> MenuItem c -> StatusField -> IO ()
   --   onOpen f sw vimage mclose status
@@ -146,8 +201,4 @@ imageViewer
   --          repaint sw
   --      `onException` repaint sw
 
-  --   onPaint vimage dc _viewArea
-  --     = do mbImage <- get vimage value
-  --          case mbImage of
-  --            Nothing -> return () 
-  --            Just im -> drawImage dc im pointZero []
+
