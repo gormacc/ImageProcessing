@@ -43,8 +43,6 @@ imageViewer
        sw     <- scrolledWindow f [scrollRate := sz 10 10, on paint := onPaint vimage
                                   ,bgcolor := white, fullRepaintOnResize := False]
 
-      --  sw     <- scrolledWindow f [scrollRate := sz 10 10, bgcolor := white, fullRepaintOnResize := False]
-
        -- create file menu
        file   <- menuPane      [text := "&File"]
        mclose <- menuItem file [text := "&Close\tCtrl+C", help := "Close the image", enabled := False]
@@ -56,6 +54,7 @@ imageViewer
        migray <- menuItem file [text := "&Grayscale", help := "Grayscale"]
        mibrig <- menuItem file [text := "&Brighten", help := "Brighten"]
        midark <- menuItem file [text := "&Darken", help := "Darken"]
+       miprog <- menuItem file [text := "&Progressive", help := "Progressive"]
        menuLine file
        quit   <- menuQuit file [help := "Quit the demo"]
 
@@ -76,6 +75,7 @@ imageViewer
        tbarGray   <- toolMenu tbar migray  "Grayscale"  abimg []
        tbarBrig   <- toolMenu tbar mibrig  "Brighten"  abimg []
        tbarDark   <- toolMenu tbar midark  "Darken"  abimg []
+       tbarProg   <- toolMenu tbar miprog  "Progressive" abimg []
 
        -- create statusbar field
        status <- statusField   [text := "Welcome to the wxHaskell ImageViewer"]
@@ -86,7 +86,7 @@ imageViewer
                                            ,fill (widget sw)]
              ,statusBar        := [status]
              ,menuBar          := [file,hlp]
-             ,outerSize        := sz 400 300    -- niceness
+             ,outerSize        := sz 800 600    -- niceness
 
              ]
         
@@ -94,13 +94,14 @@ imageViewer
            networkDescription = mdo
               eAbout <- event0 tbarAbout command
               eOpen  <- event0 tbarOpen command 
-              eR90  <- event0 tbarR90 command
+              eR90   <- event0 tbarR90 command
               eR180  <- event0 tbarR180 command
               eR270  <- event0 tbarR270 command
               eScal  <- event0 tbarScal command
               eGray  <- event0 tbarGray command
               eBrig  <- event0 tbarBrig command
               eDark  <- event0 tbarDark command
+              eProg  <- event0 tbarProg command
 
               let showAbout :: IO ()
                   showAbout = infoDialog f "About ImageViewer" "This is a wxHaskell demo"
@@ -192,6 +193,31 @@ imageViewer
                     = do manipulate darken
 
               reactimate (onDarken <$ eDark)
+              
+              let onProgressiveRec :: J.Image PixelRGB8 -> Int -> IO ()
+                  onProgressiveRec img partitioner 
+                    = do retImg <- prepareProgressive img partitioner
+                         case retImg of 
+                           Nothing -> return ()
+                           Just im -> do
+                             wim <- convertToImage im
+                             closeImage
+                             set vimage [value := Just wim]
+                             imsize <- get wim size
+                             set sw [virtualSize := imsize]
+                             repaint sw
+                             onProgressiveRec img (partitioner * 2)
+
+              let onProgressive :: IO ()
+                  onProgressive
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             onProgressiveRec img 1
+
+              reactimate (onProgressive <$ eProg)
 
        network <- compile networkDescription
        actuate network
