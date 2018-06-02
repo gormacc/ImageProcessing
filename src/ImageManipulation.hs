@@ -51,25 +51,22 @@ rotate270 img@Image {..} = runST $ do
             go (x + 1) y
   go 0 0
 
-scaleX :: Double
-scaleX = 2
-
-scaleY :: Double
-scaleY = 2
-
-scale :: Image PixelRGB8 -> Image PixelRGB8
-scale img@Image {..} = runST $ do
-  mimg <- newMutableImage (myRound imageWidth scaleX) (myRound imageHeight scaleY)
-  let go x y
-        | x >= (myRound imageWidth scaleX)  = go 0 (y + 1)
-        | y >= (myRound imageHeight scaleY) = unsafeFreezeImage mimg
-        | otherwise = do
-            writePixel mimg
-              x
-              y
-              (pixelAt img (revertMyRound x scaleX) (revertMyRound y scaleY))
-            go (x + 1) y
-  go 0 0
+scale :: Double -> Double -> Image PixelRGB8 -> Image PixelRGB8
+scale scaleX scaleY img@Image {..} = do
+  runST $ do
+    mimg <- newMutableImage (myRound imageWidth scaleX) (myRound imageHeight scaleY)
+    let newImageWidth = myRound imageWidth scaleX
+        newImageHeight = myRound imageHeight scaleY
+        go x y
+          | x >= newImageWidth  = go 0 (y + 1)
+          | y >= newImageHeight = unsafeFreezeImage mimg
+          | otherwise = do
+              writePixel mimg
+                x
+                y
+                (pixelAt img (revertMyRound x scaleX) (revertMyRound y scaleY))
+              go (x + 1) y
+    go 0 0
 
 myRound :: Int -> Double -> Int
 myRound val sc = truncate $ sc * (fromIntegral val)

@@ -9,6 +9,8 @@ import Reactive.Banana.WX
 import Reactive.Banana.Frameworks
 import Graphics.UI.WXCore as W
 import Codec.Picture as J
+import Text.Read (readMaybe)
+import Control.Monad (liftM)
 
 import Convertion 
 import Paths_ImageProcessing
@@ -42,6 +44,11 @@ imageViewer
        -- add a scrollable window widget in the frame
        sw     <- scrolledWindow f [scrollRate := sz 10 10, on paint := onPaint vimage
                                   ,bgcolor := white, fullRepaintOnResize := False]
+
+       -- scale input entries
+       p      <- panel f []
+       scinx  <- entry p []
+       sciny  <- entry p []
 
        -- create file menu
        file   <- menuPane      [text := "&File"]
@@ -80,10 +87,20 @@ imageViewer
        -- create statusbar field
        status <- statusField   [text := "Welcome to the wxHaskell ImageViewer"]
 
+       -- set panel for inputs
+
+       set p [layout := margin 10 $
+            column 10 [
+                grid 10 10 [[label "ScaleX:", widget scinx],
+                            [label "ScaleY:" , widget sciny ]]
+            ]]
+
+        -- stack exec ImageProcessing
+
        -- set the statusbar, menubar, layout, and add menu item event handlers
        -- note: set the layout before the menubar!
-       set f [layout           := column 1 [hfill $ hrule 1  -- add divider between toolbar and scrolledWindow
-                                           ,fill (widget sw)]
+       set f [layout           := row 10 [ column 5 [ vfill $ widget p],
+                                           column 5 [ fill $ widget sw]]
              ,statusBar        := [status]
              ,menuBar          := [file,hlp]
              ,outerSize        := sz 800 600    -- niceness
@@ -92,6 +109,7 @@ imageViewer
         
        let networkDescription :: MomentIO ()
            networkDescription = mdo
+
               eAbout <- event0 tbarAbout command
               eOpen  <- event0 tbarOpen command 
               eR90   <- event0 tbarR90 command
@@ -137,6 +155,14 @@ imageViewer
                            Just fname -> openImage fname
 
               reactimate (openClick <$ eOpen)
+
+              let actualizeImage :: W.Image () -> IO ()
+                  actualizeImage newImg
+                    = do closeImage
+                         set vimage [value := Just newImg]
+                         imsize <- get newImg size
+                         set sw [virtualSize := imsize]
+                         repaint sw
               
               let manipulate :: (J.Image PixelRGB8 -> J.Image PixelRGB8) -> IO ()
                   manipulate fun
@@ -146,11 +172,7 @@ imageViewer
                            Just im -> do
                              img <- convertToImageRGB8 im
                              newImg <- convertToImage (fun img)
-                             closeImage
-                             set vimage [value := Just newImg]
-                             imsize <- get newImg size
-                             set sw [virtualSize := imsize]
-                             repaint sw
+                             actualizeImage newImg
 
               let onRotate90 :: IO ()
                   onRotate90
@@ -170,9 +192,33 @@ imageViewer
 
               reactimate (onRotate270 <$ eR270)
 
+              let getScaleX :: IO Double
+                  getScaleX = do
+                    sc <- get scinx text
+                    db <- (return (readMaybe sc :: Maybe Double))
+                    case db of
+                      Nothing -> return 1
+                      Just val -> return val
+              
+              let getScaleY :: IO Double
+                  getScaleY = do
+                    sc <- get sciny text
+                    db <- (return (readMaybe sc :: Maybe Double))
+                    case db of
+                      Nothing -> return 1
+                      Just val -> return val
+
               let onScale :: IO ()
                   onScale
-                    = do manipulate scale
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             scaleX <- getScaleX
+                             scaleY <- getScaleY
+                             newImg <- convertToImage (scale scaleX scaleY img)
+                             actualizeImage newImg
 
               reactimate (onScale <$ eScal)
 
@@ -194,30 +240,30 @@ imageViewer
 
               reactimate (onDarken <$ eDark)
               
-              let onProgressiveRec :: J.Image PixelRGB8 -> Int -> IO ()
-                  onProgressiveRec img partitioner 
-                    = do retImg <- prepareProgressive img partitioner
-                         case retImg of 
-                           Nothing -> return ()
-                           Just im -> do
-                             wim <- convertToImage im
-                             closeImage
-                             set vimage [value := Just wim]
-                             imsize <- get wim size
-                             set sw [virtualSize := imsize]
-                             repaint sw
-                             onProgressiveRec img (partitioner * 2)
+              -- let onProgressiveRec :: J.Image PixelRGB8 -> Int -> IO ()
+              --     onProgressiveRec img partitioner 
+              --       = do retImg <- prepareProgressive img partitioner
+              --            case retImg of 
+              --              Nothing -> return ()
+              --              Just im -> do
+              --                wim <- convertToImage im
+              --                closeImage
+              --                set vimage [value := Just wim]
+              --                imsize <- get wim size
+              --                set sw [virtualSize := imsize]
+              --                repaint sw
+              --                onProgressiveRec img (partitioner * 2)
 
-              let onProgressive :: IO ()
-                  onProgressive
-                    = do mbImage <- swap vimage value Nothing
-                         case mbImage of
-                           Nothing -> return ()
-                           Just im -> do
-                             img <- convertToImageRGB8 im
-                             onProgressiveRec img 1
+              -- let onProgressive :: IO ()
+              --     onProgressive
+              --       = do mbImage <- swap vimage value Nothing
+              --            case mbImage of
+              --              Nothing -> return ()
+              --              Just im -> do
+              --                img <- convertToImageRGB8 im
+              --                onProgressiveRec img 1
 
-              reactimate (onProgressive <$ eProg)
+              -- reactimate (onProgressive <$ eProg)
 
        network <- compile networkDescription
        actuate network
