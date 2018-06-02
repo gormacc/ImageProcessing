@@ -8,6 +8,8 @@ import Control.Monad
 import Control.Monad.ST
 import Codec.Picture.Types
 import Control.Monad.Primitive
+import Data.Matrix
+import Data.Word
 
 rotate180 :: Image PixelRGB8 -> Image PixelRGB8
 rotate180 img@Image {..} = runST $ do
@@ -76,20 +78,20 @@ revertMyRound val sc = truncate $ (fromIntegral val) / sc
 
 grayscale :: Image PixelRGB8 -> Image PixelRGB8
 grayscale = pixelMap grayFunction where
-  grayFunction (PixelRGB8 r g b) = PixelRGB8 val val val where
-    val = truncate ( (fromIntegral (r + g + b)) / 3) 
+  grayFunction (PixelRGB8 r g b) = PixelRGB8 (toEnum val) (toEnum val) (toEnum val) where
+    val = truncate ( ( (toRational r) + (toRational g) + (toRational b)) / 3) 
 
 brighten :: Image PixelRGB8 -> Image PixelRGB8
 brighten = pixelMap brightFunction
-      where up v = fromIntegral (fromIntegral v + 1)
+      where up v =  (fromEnum v) + 1
             brightFunction (PixelRGB8 r g b) =
-                    PixelRGB8 (min (up r)  255) (min (up g) 255) (min (up b) 255)
+                    PixelRGB8 (toEnum (min (up r) 255)) (toEnum (min (up g) 255)) (toEnum (min (up b) 255))
 
 darken :: Image PixelRGB8 -> Image PixelRGB8
 darken = pixelMap darkFunction
-      where down v = fromIntegral (fromIntegral v - 1)
+      where down v = (fromEnum v ) - 1
             darkFunction (PixelRGB8 r g b) =
-                    PixelRGB8 (max (down r)  0) (max (down g) 0) (max (down b) 0)
+                    PixelRGB8 (toEnum (max (down r) 0)) (toEnum (max (down g) 0)) (toEnum(max (down b) 0))
 
 prepareProgressive :: Image PixelRGB8 -> Int -> IO(Maybe(Image PixelRGB8))
 prepareProgressive img@Image {..} partitioner
@@ -124,3 +126,62 @@ prepareSquare mimg pixel xs ys xe ye = do
 
 prepareStep :: Int -> Int -> IO (Int)
 prepareStep param part = do return $ truncate $ (fromIntegral param) / (fromIntegral part)
+
+testMatrix :: Matrix Int
+testMatrix = matrix 3 3 $ \(i,j) -> 1
+
+testMatrix' :: Matrix Int
+testMatrix' = fromList 3 3 [1,1,1,1,4,1,1,1,1]
+
+imageFilter :: Image PixelRGB8 -> Matrix Int -> Image PixelRGB8
+imageFilter img@Image {..} matrix = runST $ do
+  mimg <- newMutableImage imageWidth imageHeight 
+  let go x y
+        | x >= imageWidth  = go 0 (y + 1)
+        | y >= imageHeight = unsafeFreezeImage mimg
+        | otherwise = do
+            --prepareFilterPixel mimg img matrix x y   -- do poprawienia !!!!!!
+            go (x + 1) y
+  go 0 0
+
+prepareFilterPixel mimg img@Image {..} matrix w h = do
+  let sumF = sum $ toList matrix
+      go x y sumR sumG sumB
+        | x >= 3  = go 0 (y + 1) sumR sumG sumB
+        | y >= 3 = writePixel mimg w h (preparePixel sumR sumG sumB sumF )
+        | otherwise = do
+            pixel <- takePixel img x y
+            val <- takeValFromMatrix matrix x y
+            go (x + 1) y (sumR + ((takeRed pixel) * val)) (sumG + ((takeGreen pixel) * val)) ((sumB + (takeBlue pixel) * val))
+  go 0 0 0 0 0
+
+preparePixel :: Int -> Int -> Int -> Int -> PixelRGB8
+preparePixel r g b f = PixelRGB8 (preparePixelColor r f) (preparePixelColor g f) (preparePixelColor b f)
+
+preparePixelColor :: Int -> Int -> Word8
+preparePixelColor col f = toEnum $ truncate $ ((fromIntegral col) / (fromIntegral f)) 
+
+pixelZero :: PixelRGB8
+pixelZero = PixelRGB8 0 0 0
+
+takePixel :: Image PixelRGB8 -> Int -> Int -> IO PixelRGB8
+takePixel img@Image {..} x y 
+  | x < 0 = return $ pixelZero
+  | y < 0 = return $ pixelZero
+  | x >= imageWidth = return $ pixelZero
+  | y >= imageHeight = return $ pixelZero
+  | otherwise = return $ pixelAt img x y
+
+takeValFromMatrix :: Matrix Int -> Int -> Int -> IO Int
+takeValFromMatrix matrix x y = return $ getElem x y matrix
+
+takeRed :: PixelRGB8 -> Int
+takeRed (PixelRGB8 r g b) = fromEnum r
+
+takeGreen :: PixelRGB8 -> Int
+takeGreen (PixelRGB8 r g b) = fromEnum g
+
+takeBlue :: PixelRGB8 -> Int
+takeBlue (PixelRGB8 r g b) = fromEnum b
+
+

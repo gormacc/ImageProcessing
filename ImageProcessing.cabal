@@ -41,6 +41,7 @@ executable ImageProcessing
       JuicyPixels,
       base,
       primitive ,
+      matrix ,
       reactive-banana ,
       reactive-banana-wx ,
       wxcore,

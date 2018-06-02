@@ -45,6 +45,18 @@ imageViewer
        sw     <- scrolledWindow f [scrollRate := sz 10 10, on paint := onPaint vimage
                                   ,bgcolor := white, fullRepaintOnResize := False]
 
+       -- filter matrix
+       pa     <- panel f []
+       fonon  <- entry pa []
+       fontw  <- entry pa []
+       fonth  <- entry pa []
+       ftwon  <- entry pa []
+       ftwtw  <- entry pa []
+       ftwth  <- entry pa []
+       fthon  <- entry pa []
+       fthtw  <- entry pa []
+       fthth  <- entry pa []
+
        -- scale input entries
        p      <- panel f []
        scinx  <- entry p []
@@ -61,6 +73,7 @@ imageViewer
        migray <- menuItem file [text := "&Grayscale", help := "Grayscale"]
        mibrig <- menuItem file [text := "&Brighten", help := "Brighten"]
        midark <- menuItem file [text := "&Darken", help := "Darken"]
+       mifilt <- menuItem file [text := "&Use filter", help := "Use filter"]
        miprog <- menuItem file [text := "&Progressive", help := "Progressive"]
        menuLine file
        quit   <- menuQuit file [help := "Quit the demo"]
@@ -82,16 +95,17 @@ imageViewer
        tbarGray   <- toolMenu tbar migray  "Grayscale"  abimg []
        tbarBrig   <- toolMenu tbar mibrig  "Brighten"  abimg []
        tbarDark   <- toolMenu tbar midark  "Darken"  abimg []
+       tbarFilt   <- toolMenu tbar mifilt  "Use filter" abimg []
        tbarProg   <- toolMenu tbar miprog  "Progressive" abimg []
 
        -- create statusbar field
        status <- statusField   [text := "Welcome to the wxHaskell ImageViewer"]
 
-       -- set panel for inputs
+       -- set panel for scale inputs
 
        set p [layout := margin 10 $
-            column 10 [
-                grid 10 10 [[label "ScaleX:", widget scinx],
+            row 1 [
+                grid 1 1 [[label "ScaleX:", widget scinx],
                             [label "ScaleY:" , widget sciny ]]
             ]]
 
@@ -119,6 +133,7 @@ imageViewer
               eGray  <- event0 tbarGray command
               eBrig  <- event0 tbarBrig command
               eDark  <- event0 tbarDark command
+              eFilt  <- event0 tbarFilt command
               eProg  <- event0 tbarProg command
 
               let showAbout :: IO ()
@@ -171,7 +186,7 @@ imageViewer
                            Nothing -> return ()
                            Just im -> do
                              img <- convertToImageRGB8 im
-                             newImg <- convertToImage (fun img)
+                             newImg <- convertToImage $ fun img
                              actualizeImage newImg
 
               let onRotate90 :: IO ()
@@ -217,7 +232,7 @@ imageViewer
                              img <- convertToImageRGB8 im
                              scaleX <- getScaleX
                              scaleY <- getScaleY
-                             newImg <- convertToImage (scale scaleX scaleY img)
+                             newImg <- convertToImage $ scale scaleX scaleY img
                              actualizeImage newImg
 
               reactimate (onScale <$ eScal)
@@ -239,6 +254,18 @@ imageViewer
                     = do manipulate darken
 
               reactimate (onDarken <$ eDark)
+
+              let onFilter :: IO ()
+                  onFilter
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             newImg <- convertToImage $ imageFilter img testMatrix'
+                             actualizeImage newImg
+
+              reactimate (onFilter <$ eFilt)
               
               -- let onProgressiveRec :: J.Image PixelRGB8 -> Int -> IO ()
               --     onProgressiveRec img partitioner 
