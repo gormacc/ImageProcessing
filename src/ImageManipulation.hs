@@ -114,7 +114,7 @@ prepareProgressive img@Image {..} partitioner
                       go xe ys (xe + stepX) ye
             go 0 0 stepX stepY
 
--- prepareSquare :: PrimMonad m => MutableImage (PrimState m) a -> PixelRGB8 -> Int -> Int -> Int -> Int -> IO ()
+--prepareSquare :: PrimMonad m => MutableImage (PrimState m) a -> PixelRGB8 -> Int -> Int -> Int -> Int -> IO ()
 prepareSquare mimg pixel xs ys xe ye = do 
   let go x y
         | x >= xe  = go xs (y + 1)
@@ -140,20 +140,21 @@ imageFilter img@Image {..} matrix = runST $ do
         | x >= imageWidth  = go 0 (y + 1)
         | y >= imageHeight = unsafeFreezeImage mimg
         | otherwise = do
-            --prepareFilterPixel mimg img matrix x y   -- do poprawienia !!!!!!
+            writePixel mimg x y (prepareFilterPixel img matrix x y)
             go (x + 1) y
   go 0 0
 
-prepareFilterPixel mimg img@Image {..} matrix w h = do
-  let sumF = sum $ toList matrix
-      go x y sumR sumG sumB
-        | x >= 3  = go 0 (y + 1) sumR sumG sumB
-        | y >= 3 = writePixel mimg w h (preparePixel sumR sumG sumB sumF )
-        | otherwise = do
-            pixel <- takePixel img x y
-            val <- takeValFromMatrix matrix x y
-            go (x + 1) y (sumR + ((takeRed pixel) * val)) (sumG + ((takeGreen pixel) * val)) ((sumB + (takeBlue pixel) * val))
-  go 0 0 0 0 0
+prepareFilterPixel :: Image PixelRGB8 -> Matrix Int -> Int -> Int -> PixelRGB8 -- TODO
+prepareFilterPixel img@Image {..} matrix w h = pixelZero
+  -- let sumF = sum $ toList matrix
+  --     go x y sumR sumG sumB
+  --       | x >= 3  = go 0 (y + 1) sumR sumG sumB
+  --       | y >= 3 = return $ preparePixel sumR sumG sumB sumF
+  --       | otherwise = do
+  --           pixel <- takePixel img x y
+  --           val <- takeValFromMatrix matrix x y
+  --           go (x + 1) y (sumR + ((takeRed pixel) * val)) (sumG + ((takeGreen pixel) * val)) ((sumB + (takeBlue pixel) * val))
+  -- go 0 0 0 0 0
 
 preparePixel :: Int -> Int -> Int -> Int -> PixelRGB8
 preparePixel r g b f = PixelRGB8 (preparePixelColor r f) (preparePixelColor g f) (preparePixelColor b f)
