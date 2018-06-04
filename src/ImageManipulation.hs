@@ -133,6 +133,15 @@ testMatrix = matrix 3 3 $ \(i,j) -> 1
 testMatrix' :: Matrix Int
 testMatrix' = fromList 3 3 [1,1,1,1,4,1,1,1,1]
 
+testMatrix'' :: Matrix Int
+testMatrix'' = fromList 3 3 [0,0,0,-1,1,0,0,0,0]
+
+testMatrix''' :: Matrix Int
+testMatrix''' = fromList 3 3 [1,2,1,2,4,2,1,2,1]
+
+testMatrix'''' :: Matrix Int
+testMatrix'''' = fromList 3 3 [-1,-1,-1,-1,9,-1,-1,-1,-1]
+
 imageFilter :: Image PixelRGB8 -> Matrix Int -> Image PixelRGB8
 imageFilter img@Image {..} matrix = runST $ do
   mimg <- newMutableImage imageWidth imageHeight 
@@ -144,17 +153,21 @@ imageFilter img@Image {..} matrix = runST $ do
             go (x + 1) y
   go 0 0
 
-prepareFilterPixel :: Image PixelRGB8 -> Matrix Int -> Int -> Int -> PixelRGB8 -- TODO
-prepareFilterPixel img@Image {..} matrix w h = pixelZero
-  -- let sumF = sum $ toList matrix
-  --     go x y sumR sumG sumB
-  --       | x >= 3  = go 0 (y + 1) sumR sumG sumB
-  --       | y >= 3 = return $ preparePixel sumR sumG sumB sumF
-  --       | otherwise = do
-  --           pixel <- takePixel img x y
-  --           val <- takeValFromMatrix matrix x y
-  --           go (x + 1) y (sumR + ((takeRed pixel) * val)) (sumG + ((takeGreen pixel) * val)) ((sumB + (takeBlue pixel) * val))
-  -- go 0 0 0 0 0
+prepareFilterPixel :: Image PixelRGB8 -> Matrix Int -> Int -> Int -> PixelRGB8
+prepareFilterPixel img matrix w h = go 0 0 0 0 0 where
+  sumF = sum $ toList matrix
+  go x y sumR sumG sumB
+    | x >= 3  = go 0 (y + 1) sumR sumG sumB
+    | y >= 3 = preparePixel sumR sumG sumB sumF
+    | pixel == Nothing = go (x + 1) y sumR sumG sumB
+    | otherwise = go (x + 1) y (sumR + ((takeRed pixelVal) * val)) (sumG + ((takeGreen pixelVal) * val)) ((sumB + (takeBlue pixelVal) * val)) where
+      val = takeValFromMatrix matrix x y
+      pixel = takePixel img (w + x - 2) (h + y - 2)
+      pixelVal = fromJust pixel
+
+fromJust :: Maybe PixelRGB8 -> PixelRGB8
+fromJust (Just a) = a
+fromJust Nothing = pixelZero
 
 preparePixel :: Int -> Int -> Int -> Int -> PixelRGB8
 preparePixel r g b f = PixelRGB8 (preparePixelColor r f) (preparePixelColor g f) (preparePixelColor b f)
@@ -165,16 +178,16 @@ preparePixelColor col f = toEnum $ truncate $ ((fromIntegral col) / (fromIntegra
 pixelZero :: PixelRGB8
 pixelZero = PixelRGB8 0 0 0
 
-takePixel :: Image PixelRGB8 -> Int -> Int -> IO PixelRGB8
+takePixel :: Image PixelRGB8 -> Int -> Int -> Maybe PixelRGB8
 takePixel img@Image {..} x y 
-  | x < 0 = return $ pixelZero
-  | y < 0 = return $ pixelZero
-  | x >= imageWidth = return $ pixelZero
-  | y >= imageHeight = return $ pixelZero
-  | otherwise = return $ pixelAt img x y
+  | x < 0 = Nothing
+  | y < 0 = Nothing
+  | x >= imageWidth = Nothing
+  | y >= imageHeight = Nothing
+  | otherwise = Just $ pixelAt img x y
 
-takeValFromMatrix :: Matrix Int -> Int -> Int -> IO Int
-takeValFromMatrix matrix x y = return $ getElem x y matrix
+takeValFromMatrix :: Matrix Int -> Int -> Int -> Int
+takeValFromMatrix matrix x y = getElem (x+1) (y+1) matrix
 
 takeRed :: PixelRGB8 -> Int
 takeRed (PixelRGB8 r g b) = fromEnum r

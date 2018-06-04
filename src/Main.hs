@@ -262,7 +262,7 @@ imageViewer
                            Nothing -> return ()
                            Just im -> do
                              img <- convertToImageRGB8 im
-                             newImg <- convertToImage $ imageFilter img testMatrix'
+                             newImg <- convertToImage $ imageFilter img testMatrix'''
                              actualizeImage newImg
 
               reactimate (onFilter <$ eFilt)
