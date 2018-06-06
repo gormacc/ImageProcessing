@@ -191,4 +191,38 @@ takeGreen (PixelRGB8 r g b) = fromEnum g
 takeBlue :: PixelRGB8 -> Int
 takeBlue (PixelRGB8 r g b) = fromEnum b
 
+addRedCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+addRedCanal times = pixelMap redCanalFunction
+      where up v = (fromEnum v) + times
+            redCanalFunction (PixelRGB8 r g b) = 
+                    PixelRGB8 (toEnum (clamp (up r))) g b
 
+removeRedCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+removeRedCanal times = pixelMap redCanalFunction
+      where up v = (fromEnum v) - times
+            redCanalFunction (PixelRGB8 r g b) = 
+                    PixelRGB8 (toEnum (clamp (up r))) g b
+
+addGreenCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+addGreenCanal times = pixelMap greenCanalFunction
+      where up v = (fromEnum v) + times
+            greenCanalFunction (PixelRGB8 r g b) = 
+                    PixelRGB8 r (toEnum (clamp (up g))) b
+
+removeGreenCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+removeGreenCanal times = pixelMap greenCanalFunction
+      where up v = (fromEnum v) - times
+            greenCanalFunction (PixelRGB8 r g b) = 
+                    PixelRGB8 r (toEnum (clamp (up g))) b
+
+addBlueCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+addBlueCanal times = pixelMap blueCanalFunction
+      where up v = (fromEnum v) + times
+            blueCanalFunction (PixelRGB8 r g b) = 
+                    PixelRGB8 r g (toEnum (clamp (up b)))
+
+removeBlueCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+removeBlueCanal times = pixelMap blueCanalFunction
+      where up v = (fromEnum v) - times
+            blueCanalFunction (PixelRGB8 r g b) = 
+                    PixelRGB8 r g (toEnum (clamp (up b)))

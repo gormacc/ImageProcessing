@@ -56,20 +56,32 @@ imageViewer
        fthon  <- entry pa []
        fthtw  <- entry pa []
        fthth  <- entry pa []
-       btnFi  <- button pa [ text := "Use filter"]
+       btnFi  <- button pa [ text := "Use filter" ]
        
        -- scale input entries
        p      <- panel f []
        scinx  <- entry p []
        sciny  <- entry p []
-       btnSc  <- button p [ text := "Scale"]
+       btnSc  <- button p [ text := "Scale" ]
 
        -- darken brighten inputs
        pan    <- panel f []
        darkE  <- entry pan []
        brigE  <- entry pan []
        btnDa  <- button pan [ text := "Darken" ]
-       btnBr  <- button pan [ text := "Brighten"]
+       btnBr  <- button pan [ text := "Brighten" ]
+
+       -- przeksztalcanie kazdego kanalu
+       pane   <- panel f []
+       redE   <- entry pane []
+       btnRP  <- button pane [ text := "Up" ]
+       btnRM  <- button pane [ text := "Down" ]
+       grnE   <- entry pane []
+       btnGP  <- button pane [ text := "Up" ]
+       btnGM  <- button pane [ text := "Down" ]
+       bluE   <- entry pane []
+       btnBP  <- button pane [ text := "Up" ]
+       btnBM  <- button pane [ text := "Down" ]
 
        -- elements of Toolbar
        file   <- menuPane      []
@@ -126,11 +138,22 @@ imageViewer
                       ]]
           ]
 
+       set pane [layout := margin 10 $ 
+          row 1 [
+              grid 1 1 [  [label "Red canal:", widget redE],
+                          [margin 5 $ widget btnRP, margin 5 $ widget btnRM],
+                          [label "Green canal:", widget grnE],
+                          [margin 5 $ widget btnGP, margin 5 $ widget btnGM],
+                          [label "Blue canal:", widget bluE],
+                          [margin 5 $ widget btnBP, margin 5 $ widget btnBM]
+                        ]]
+          ]
+
         -- stack exec ImageProcessing
 
        -- set the statusbar, menubar, layout, and add menu item event handlers
        -- note: set the layout before the menubar!
-       set f [layout           := row 10 [ column 5 [ vfill $ column 10 [widget p, widget pan, widget pa]],
+       set f [layout           := row 10 [ column 5 [ vfill $ column 10 [widget p, widget pan, widget pa, widget pane]],
                                            column 5 [ fill $ widget sw]
                                          ]
              ,statusBar        := [status]
@@ -150,6 +173,12 @@ imageViewer
               eBrig  <- event0 btnBr    command
               eDark  <- event0 btnDa    command
               eFilt  <- event0 btnFi    command
+              eRedP  <- event0 btnRP    command
+              eRedM  <- event0 btnRM    command 
+              eGrnP  <- event0 btnGP    command
+              eGrnM  <- event0 btnGM    command
+              eBluP  <- event0 btnBP    command
+              eBluM  <- event0 btnBM    command
               --eProg  <- event0 tbarProg command
 
               let closeImage :: IO ()    
@@ -323,7 +352,85 @@ imageViewer
                              actualizeImage newImg
 
               reactimate (onFilter <$ eFilt)
-              
+
+              let onRedUp :: IO ()
+                  onRedUp
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             val <- getIntValue redE
+                             newImg <- convertToImage $ addRedCanal val img
+                             actualizeImage newImg
+
+              reactimate (onRedUp <$ eRedP)
+
+              let onRedDown :: IO ()
+                  onRedDown
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             val <- getIntValue redE
+                             newImg <- convertToImage $ removeRedCanal val img
+                             actualizeImage newImg
+
+              reactimate (onRedDown <$ eRedM)
+
+              let onGreenUp :: IO ()
+                  onGreenUp
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             val <- getIntValue grnE
+                             newImg <- convertToImage $ addGreenCanal val img
+                             actualizeImage newImg
+
+              reactimate (onGreenUp <$ eGrnP)
+
+              let onGreenDown :: IO ()
+                  onGreenDown
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             val <- getIntValue grnE
+                             newImg <- convertToImage $ removeGreenCanal val img
+                             actualizeImage newImg
+
+              reactimate (onGreenDown <$ eGrnM)
+
+              let onBlueUp :: IO ()
+                  onBlueUp
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             val <- getIntValue bluE
+                             newImg <- convertToImage $ addBlueCanal val img
+                             actualizeImage newImg
+
+              reactimate (onBlueUp <$ eBluP)
+
+              let onBlueDown :: IO ()
+                  onBlueDown
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             val <- getIntValue bluE
+                             newImg <- convertToImage $ removeBlueCanal val img
+                             actualizeImage newImg
+
+              reactimate (onBlueDown <$ eBluM)
+
               -- let onProgressiveRec :: J.Image PixelRGB8 -> Int -> IO ()
               --     onProgressiveRec img partitioner 
               --       = do retImg <- prepareProgressive img partitioner
