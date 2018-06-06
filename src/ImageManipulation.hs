@@ -81,17 +81,20 @@ grayscale = pixelMap grayFunction where
   grayFunction (PixelRGB8 r g b) = PixelRGB8 (toEnum val) (toEnum val) (toEnum val) where
     val = truncate ( ( (toRational r) + (toRational g) + (toRational b)) / 3) 
 
-brighten :: Image PixelRGB8 -> Image PixelRGB8
-brighten = pixelMap brightFunction
-      where up v =  (fromEnum v) + 1
-            brightFunction (PixelRGB8 r g b) =
-                    PixelRGB8 (toEnum (min (up r) 255)) (toEnum (min (up g) 255)) (toEnum (min (up b) 255))
+clamp :: Int -> Int
+clamp val = max 0 $ min 255 val
 
-darken :: Image PixelRGB8 -> Image PixelRGB8
-darken = pixelMap darkFunction
-      where down v = (fromEnum v ) - 1
+brighten :: Int -> Image PixelRGB8 -> Image PixelRGB8
+brighten times = pixelMap brightFunction
+      where up v =  (fromEnum v) + times
+            brightFunction (PixelRGB8 r g b) =
+                    PixelRGB8 (toEnum (clamp (up r))) (toEnum (clamp (up g))) (toEnum (clamp (up b)))
+
+darken :: Int -> Image PixelRGB8 -> Image PixelRGB8
+darken times = pixelMap darkFunction
+      where down v = (fromEnum v ) - times
             darkFunction (PixelRGB8 r g b) =
-                    PixelRGB8 (toEnum (max (down r) 0)) (toEnum (max (down g) 0)) (toEnum(max (down b) 0))
+                    PixelRGB8 (toEnum (clamp (down r))) (toEnum (clamp (down g))) (toEnum(clamp (down b)))
 
 prepareProgressive :: Image PixelRGB8 -> Int -> IO(Maybe(Image PixelRGB8))
 prepareProgressive img@Image {..} partitioner
@@ -126,21 +129,6 @@ prepareSquare mimg pixel xs ys xe ye = do
 
 prepareStep :: Int -> Int -> IO (Int)
 prepareStep param part = do return $ truncate $ (fromIntegral param) / (fromIntegral part)
-
-testMatrix :: Matrix Int
-testMatrix = matrix 3 3 $ \(i,j) -> 1
-
-testMatrix' :: Matrix Int
-testMatrix' = fromList 3 3 [1,1,1,1,4,1,1,1,1]
-
-testMatrix'' :: Matrix Int
-testMatrix'' = fromList 3 3 [0,0,0,-1,1,0,0,0,0]
-
-testMatrix''' :: Matrix Int
-testMatrix''' = fromList 3 3 [1,2,1,2,4,2,1,2,1]
-
-testMatrix'''' :: Matrix Int
-testMatrix'''' = fromList 3 3 [-1,-1,-1,-1,9,-1,-1,-1,-1]
 
 imageFilter :: Image PixelRGB8 -> Matrix Int -> Image PixelRGB8
 imageFilter img@Image {..} matrix = runST $ do
@@ -177,7 +165,7 @@ preparePixel :: Int -> Int -> Int -> Int -> PixelRGB8
 preparePixel r g b f = PixelRGB8 (preparePixelColor r f) (preparePixelColor g f) (preparePixelColor b f)
 
 preparePixelColor :: Int -> Int -> Word8
-preparePixelColor col f = toEnum $ truncate $ ((fromIntegral col) / (fromIntegral f)) 
+preparePixelColor col f = toEnum $ clamp $ truncate $ ((fromIntegral col) / (fromIntegral f)) 
 
 pixelZero :: PixelRGB8
 pixelZero = PixelRGB8 0 0 0

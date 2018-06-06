@@ -11,6 +11,7 @@ import Graphics.UI.WXCore as W
 import Codec.Picture as J
 import Text.Read (readMaybe)
 import Control.Monad (liftM)
+import Data.Matrix
 
 import Convertion 
 import Paths_ImageProcessing
@@ -62,32 +63,30 @@ imageViewer
        scinx  <- entry p []
        sciny  <- entry p []
 
-       -- create file menu
-       file   <- menuPane      [text := "&File"]
-       mclose <- menuItem file [text := "&Close\tCtrl+C", help := "Close the image", enabled := False]
-       open   <- menuItem file [text := "&Open\tCtrl+O",  help := "Open an image"]
-       mir180 <- menuItem file [text := "&Rotate 180", help := "Rotate 180"]
-       mir90  <- menuItem file [text := "&Rotate 90", help := "Rotate 90"]
-       mir270 <- menuItem file [text := "&Rotate 270", help := "Rotate 270"]
-       miscal <- menuItem file [text := "&Scale", help := "Scale"]
-       migray <- menuItem file [text := "&Grayscale", help := "Grayscale"]
-       mibrig <- menuItem file [text := "&Brighten", help := "Brighten"]
-       midark <- menuItem file [text := "&Darken", help := "Darken"]
-       mifilt <- menuItem file [text := "&Use filter", help := "Use filter"]
-       miprog <- menuItem file [text := "&Progressive", help := "Progressive"]
-       menuLine file
-       quit   <- menuQuit file [help := "Quit the demo"]
+       -- darken brighten inputs
+       pan    <- panel f []
+       darkE  <- entry pan []
+       brigE  <- entry pan []
 
-       -- create Help menu
-       hlp    <- menuHelp      []
-       about  <- menuAbout hlp [help := "About ImageViewer"]
+       -- elements of Toolbar
+       file   <- menuPane      []
+       mclose <- menuItem file []
+       open   <- menuItem file []
+       mir180 <- menuItem file []
+       mir90  <- menuItem file []
+       mir270 <- menuItem file []
+       miscal <- menuItem file []
+       migray <- menuItem file []
+       mibrig <- menuItem file []
+       midark <- menuItem file []
+       mifilt <- menuItem file []
+       miprog <- menuItem file []
 
        -- create Toolbar
        tbar       <- toolBar f []
        foimg      <- getDataFileName "bitmaps/fileopen16.png"
        abimg      <- getDataFileName "bitmaps/wxwin16.png"
        tbarOpen   <- toolMenu tbar open  "Open"  foimg []
-       tbarAbout  <- toolMenu tbar about "About" abimg []
        tbarR90    <- toolMenu tbar mir90  "Rotate 90"  abimg []
        tbarR180   <- toolMenu tbar mir180  "Rotate 180"  abimg []
        tbarR270   <- toolMenu tbar mir270  "Rotate 270"  abimg []
@@ -105,26 +104,41 @@ imageViewer
 
        set p [layout := margin 10 $
             row 1 [
-                grid 1 1 [[label "ScaleX:", widget scinx],
-                            [label "ScaleY:" , widget sciny ]]
-            ]]
+                grid 1 1 [  [label "ScaleX:", widget scinx],
+                            [label "ScaleY:", widget sciny]
+                         ]]
+            ]
+
+       set pan [layout := margin 10 $
+            row 1 [
+                grid 1 1 [  [label "Darken:", widget darkE],
+                            [label "Brighten:", widget brigE]
+                          ]]
+            ]
+
+       set pa [layout := margin 10 $
+          row 1 [
+              grid 1 1 [  [label "Image filter:", label "", label ""],
+                          [widget fonon, widget fontw, widget fonth],
+                          [widget ftwon, widget ftwtw, widget ftwth],
+                          [widget fthon, widget fthtw, widget fthth]
+                      ]]
+          ]
 
         -- stack exec ImageProcessing
 
        -- set the statusbar, menubar, layout, and add menu item event handlers
        -- note: set the layout before the menubar!
-       set f [layout           := row 10 [ column 5 [ vfill $ widget p],
-                                           column 5 [ fill $ widget sw]]
+       set f [layout           := row 10 [ column 5 [ vfill $ column 10 [widget p, widget pan, widget pa]],
+                                           column 5 [ fill $ widget sw]
+                                         ]
              ,statusBar        := [status]
-             ,menuBar          := [file,hlp]
-             ,outerSize        := sz 800 600    -- niceness
-
+             ,outerSize        := sz 800 600  
              ]
         
        let networkDescription :: MomentIO ()
            networkDescription = mdo
 
-              eAbout <- event0 tbarAbout command
               eOpen  <- event0 tbarOpen command 
               eR90   <- event0 tbarR90 command
               eR180  <- event0 tbarR180 command
@@ -135,11 +149,6 @@ imageViewer
               eDark  <- event0 tbarDark command
               eFilt  <- event0 tbarFilt command
               eProg  <- event0 tbarProg command
-
-              let showAbout :: IO ()
-                  showAbout = infoDialog f "About ImageViewer" "This is a wxHaskell demo"
-
-              reactimate (showAbout <$ eAbout)
 
               let closeImage :: IO ()    
                   closeImage
@@ -170,6 +179,22 @@ imageViewer
                            Just fname -> openImage fname
 
               reactimate (openClick <$ eOpen)
+              
+              let getDoubleValue :: TextCtrl () -> IO Double
+                  getDoubleValue entr = do
+                    ent <- get entr text
+                    db <- (return (readMaybe ent :: Maybe Double))
+                    case db of
+                      Nothing -> return 1
+                      Just val -> return val
+
+              let getIntValue :: TextCtrl () -> IO Int
+                  getIntValue entr = do
+                    ent <- get entr text
+                    db <- (return (readMaybe ent :: Maybe Int))
+                    case db of
+                      Nothing -> return 1
+                      Just val -> return val
 
               let actualizeImage :: W.Image () -> IO ()
                   actualizeImage newImg
@@ -207,22 +232,6 @@ imageViewer
 
               reactimate (onRotate270 <$ eR270)
 
-              let getScaleX :: IO Double
-                  getScaleX = do
-                    sc <- get scinx text
-                    db <- (return (readMaybe sc :: Maybe Double))
-                    case db of
-                      Nothing -> return 1
-                      Just val -> return val
-              
-              let getScaleY :: IO Double
-                  getScaleY = do
-                    sc <- get sciny text
-                    db <- (return (readMaybe sc :: Maybe Double))
-                    case db of
-                      Nothing -> return 1
-                      Just val -> return val
-
               let onScale :: IO ()
                   onScale
                     = do mbImage <- swap vimage value Nothing
@@ -230,8 +239,8 @@ imageViewer
                            Nothing -> return ()
                            Just im -> do
                              img <- convertToImageRGB8 im
-                             scaleX <- getScaleX
-                             scaleY <- getScaleY
+                             scaleX <- getDoubleValue scinx
+                             scaleY <- getDoubleValue sciny
                              newImg <- convertToImage $ scale scaleX scaleY img
                              actualizeImage newImg
 
@@ -245,15 +254,44 @@ imageViewer
 
               let onBrighten :: IO ()
                   onBrighten
-                    = do manipulate brighten
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             val <- getIntValue brigE
+                             newImg <- convertToImage $ brighten val img
+                             actualizeImage newImg
 
               reactimate (onBrighten <$ eBrig)
 
               let onDarken :: IO ()
                   onDarken
-                    = do manipulate darken
+                    = do mbImage <- swap vimage value Nothing
+                         case mbImage of
+                           Nothing -> return ()
+                           Just im -> do
+                             img <- convertToImageRGB8 im
+                             val <- getIntValue darkE
+                             newImg <- convertToImage $ darken val img
+                             actualizeImage newImg
 
               reactimate (onDarken <$ eDark)
+              
+              let readMatrix :: IO(Matrix Int)
+                  readMatrix = do
+                    onon <- getIntValue fonon
+                    ontw <- getIntValue fontw
+                    onth <- getIntValue fonth
+                    twon <- getIntValue ftwon
+                    twtw <- getIntValue ftwtw
+                    twth <- getIntValue ftwth
+                    thon <- getIntValue fthon
+                    thtw <- getIntValue fthtw
+                    thth <- getIntValue fthth
+                    return $ fromList 3 3 [onon, ontw, onth, 
+                                           twon, twtw, twth,
+                                           thon, thtw, thth]
 
               let onFilter :: IO ()
                   onFilter
@@ -262,7 +300,8 @@ imageViewer
                            Nothing -> return ()
                            Just im -> do
                              img <- convertToImageRGB8 im
-                             newImg <- convertToImage $ imageFilter img testMatrix'''
+                             matrix <- readMatrix
+                             newImg <- convertToImage $ imageFilter img matrix
                              actualizeImage newImg
 
               reactimate (onFilter <$ eFilt)
