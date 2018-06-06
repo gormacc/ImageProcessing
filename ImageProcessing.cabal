@@ -14,15 +14,9 @@ cabal-version:       >=1.10
 extra-source-files:  README.md
 
 data-files:
-  bitmaps/computer.ico
-  bitmaps/disk.ico
   bitmaps/eye.ico
-  bitmaps/file.ico
+  bitmaps/rotate24.png
   bitmaps/fileopen16.png
-  bitmaps/f_closed.ico
-  bitmaps/f_open.ico
-  bitmaps/hsicon.ico
-  bitmaps/wxwin.ico
   bitmaps/wxwin16.png
 
 source-repository head

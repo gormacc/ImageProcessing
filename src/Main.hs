@@ -56,16 +56,20 @@ imageViewer
        fthon  <- entry pa []
        fthtw  <- entry pa []
        fthth  <- entry pa []
-
+       btnFi  <- button pa [ text := "Use filter"]
+       
        -- scale input entries
        p      <- panel f []
        scinx  <- entry p []
        sciny  <- entry p []
+       btnSc  <- button p [ text := "Scale"]
 
        -- darken brighten inputs
        pan    <- panel f []
        darkE  <- entry pan []
        brigE  <- entry pan []
+       btnDa  <- button pan [ text := "Darken" ]
+       btnBr  <- button pan [ text := "Brighten"]
 
        -- elements of Toolbar
        file   <- menuPane      []
@@ -75,28 +79,21 @@ imageViewer
        mir180 <- menuItem file []
        mir90  <- menuItem file []
        mir270 <- menuItem file []
-       miscal <- menuItem file []
        migray <- menuItem file []
-       mibrig <- menuItem file []
-       midark <- menuItem file []
-       mifilt <- menuItem file []
-       miprog <- menuItem file []
+       --miprog <- menuItem file []
 
        -- create Toolbar
        tbar       <- toolBar f []
        foimg      <- getDataFileName "bitmaps/fileopen16.png"
        abimg      <- getDataFileName "bitmaps/wxwin16.png"
+       roimg      <- getDataFileName "bitmaps/rotate24.png"
        tbarOpen   <- toolMenu tbar open  "Open"  foimg []
        tbarSave   <- toolMenu tbar save  "Save"  foimg []
-       tbarR90    <- toolMenu tbar mir90  "Rotate 90"  abimg []
-       tbarR180   <- toolMenu tbar mir180  "Rotate 180"  abimg []
-       tbarR270   <- toolMenu tbar mir270  "Rotate 270"  abimg []
-       tbarScal   <- toolMenu tbar miscal  "Scale"  abimg []
+       tbarR90    <- toolMenu tbar mir90  "Rotate 90"  roimg []
+       tbarR180   <- toolMenu tbar mir180  "Rotate 180"  roimg []
+       tbarR270   <- toolMenu tbar mir270  "Rotate 270"  roimg []
        tbarGray   <- toolMenu tbar migray  "Grayscale"  abimg []
-       tbarBrig   <- toolMenu tbar mibrig  "Brighten"  abimg []
-       tbarDark   <- toolMenu tbar midark  "Darken"  abimg []
-       tbarFilt   <- toolMenu tbar mifilt  "Use filter" abimg []
-       tbarProg   <- toolMenu tbar miprog  "Progressive" abimg []
+       --tbarProg   <- toolMenu tbar miprog  "Progressive" abimg []
 
        -- create statusbar field
        status <- statusField   [text := "Welcome to the wxHaskell ImageViewer"]
@@ -106,14 +103,16 @@ imageViewer
        set p [layout := margin 10 $
             row 1 [
                 grid 1 1 [  [label "ScaleX:", widget scinx],
-                            [label "ScaleY:", widget sciny]
+                            [label "ScaleY:", widget sciny],
+                            [widget btnSc]
                          ]]
             ]
 
        set pan [layout := margin 10 $
-            row 1 [
+            column 1 [
                 grid 1 1 [  [label "Darken:", widget darkE],
-                            [label "Brighten:", widget brigE]
+                            [label "Brighten:", widget brigE],
+                            [widget btnDa, widget btnBr]
                           ]]
             ]
 
@@ -122,7 +121,8 @@ imageViewer
               grid 1 1 [  [label "Image filter:", label "", label ""],
                           [widget fonon, widget fontw, widget fonth],
                           [widget ftwon, widget ftwtw, widget ftwth],
-                          [widget fthon, widget fthtw, widget fthth]
+                          [widget fthon, widget fthtw, widget fthth],
+                          [widget btnFi]
                       ]]
           ]
 
@@ -145,12 +145,12 @@ imageViewer
               eR90   <- event0 tbarR90  command
               eR180  <- event0 tbarR180 command
               eR270  <- event0 tbarR270 command
-              eScal  <- event0 tbarScal command
+              eScal  <- event0 btnSc    command
               eGray  <- event0 tbarGray command
-              eBrig  <- event0 tbarBrig command
-              eDark  <- event0 tbarDark command
-              eFilt  <- event0 tbarFilt command
-              eProg  <- event0 tbarProg command
+              eBrig  <- event0 btnBr    command
+              eDark  <- event0 btnDa    command
+              eFilt  <- event0 btnFi    command
+              --eProg  <- event0 tbarProg command
 
               let closeImage :: IO ()    
                   closeImage
