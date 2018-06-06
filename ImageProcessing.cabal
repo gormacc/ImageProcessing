@@ -35,10 +35,13 @@ executable ImageProcessing
   default-language:    Haskell2010
   other-modules: 
       ImageManipulation 
-      Convertion 
+      Convertion
+  ghc-options: -fno-warn-tabs -threaded -rtsopts -with-rtsopts=-N  
   build-depends:             
       JuicyPixels,
       base,
+      primitive ,
+      matrix ,
       reactive-banana ,
       reactive-banana-wx ,
       wxcore,
