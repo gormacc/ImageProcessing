@@ -154,16 +154,20 @@ imageFilter img@Image {..} matrix = runST $ do
   go 0 0
 
 prepareFilterPixel :: Image PixelRGB8 -> Matrix Int -> Int -> Int -> PixelRGB8
-prepareFilterPixel img matrix w h = go 0 0 0 0 0 where
-  sumF = sum $ toList matrix
-  go x y sumR sumG sumB
-    | x >= 3  = go 0 (y + 1) sumR sumG sumB
+prepareFilterPixel img matrix w h = go 0 0 0 0 0 0 where
+  go x y sumR sumG sumB sumF
+    | x >= 3  = go 0 (y + 1) sumR sumG sumB sumF
     | y >= 3 = preparePixel sumR sumG sumB sumF
-    | pixel == Nothing = go (x + 1) y sumR sumG sumB
-    | otherwise = go (x + 1) y (sumR + ((takeRed pixelVal) * val)) (sumG + ((takeGreen pixelVal) * val)) ((sumB + (takeBlue pixelVal) * val)) where
+    | pixel == Nothing = go (x + 1) y sumR sumG sumB sumF
+    | otherwise = go (x + 1) y newSumR newSumG newSumB newSumF  where
       val = takeValFromMatrix matrix x y
       pixel = takePixel img (w + x - 2) (h + y - 2)
       pixelVal = fromJust pixel
+      newSumR = sumR + ((takeRed pixelVal) * val)
+      newSumG = sumG + ((takeGreen pixelVal) * val)
+      newSumB = sumB + ((takeBlue pixelVal) * val)
+      newSumF = sumF + (takeValFromMatrix matrix x y)
+
 
 fromJust :: Maybe PixelRGB8 -> PixelRGB8
 fromJust (Just a) = a
