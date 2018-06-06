@@ -24,11 +24,10 @@ main
 -- Specify image files for the file open dialog.
 imageFiles :: [(String, [String])]
 imageFiles
-   = [("Image files",["*.bmp","*.jpg","*.gif","*.png"])
+   = [("Image files",["*.bmp","*.jpg","*.png"])
      ,("Portable Network Graphics (*.png)",["*.png"])
      ,("BMP files (*.bmp)",["*.bmp"])
      ,("JPG files (*.jpg)",["*.jpg"])
-     ,("GIF files (*.gif)",["*.gif"])
      ]
 
 
@@ -72,6 +71,7 @@ imageViewer
        file   <- menuPane      []
        mclose <- menuItem file []
        open   <- menuItem file []
+       save   <- menuItem file []
        mir180 <- menuItem file []
        mir90  <- menuItem file []
        mir270 <- menuItem file []
@@ -87,6 +87,7 @@ imageViewer
        foimg      <- getDataFileName "bitmaps/fileopen16.png"
        abimg      <- getDataFileName "bitmaps/wxwin16.png"
        tbarOpen   <- toolMenu tbar open  "Open"  foimg []
+       tbarSave   <- toolMenu tbar save  "Save"  foimg []
        tbarR90    <- toolMenu tbar mir90  "Rotate 90"  abimg []
        tbarR180   <- toolMenu tbar mir180  "Rotate 180"  abimg []
        tbarR270   <- toolMenu tbar mir270  "Rotate 270"  abimg []
@@ -139,8 +140,9 @@ imageViewer
        let networkDescription :: MomentIO ()
            networkDescription = mdo
 
-              eOpen  <- event0 tbarOpen command 
-              eR90   <- event0 tbarR90 command
+              eOpen  <- event0 tbarOpen command
+              eSave  <- event0 tbarSave command 
+              eR90   <- event0 tbarR90  command
               eR180  <- event0 tbarR180 command
               eR270  <- event0 tbarR270 command
               eScal  <- event0 tbarScal command
@@ -156,8 +158,8 @@ imageViewer
                            case mbImage of
                              Nothing -> return ()
                              Just im -> objectDelete im >> return () 
-
-              let openImage :: FilePath -> IO ()
+              
+              let openImage :: Prelude.FilePath -> IO ()
                   openImage fname
                       = do -- load the new bitmap
                           im <- imageCreateFromFile fname  -- can fail with exception
@@ -179,6 +181,22 @@ imageViewer
                            Just fname -> openImage fname
 
               reactimate (openClick <$ eOpen)
+
+              let saveVimage :: FilePath -> IO ()
+                  saveVimage fname
+                      = do mbImage <- swap vimage value Nothing
+                           case mbImage of
+                             Nothing -> return ()
+                             Just im -> saveImage im fname
+                          
+              let saveClick :: IO ()
+                  saveClick
+                    = do mbfname <- fileSaveDialog f False True "Save image" imageFiles "" ""
+                         case mbfname of 
+                           Nothing -> return ()
+                           Just fname -> saveVimage fname
+
+              reactimate (saveClick <$ eSave)
               
               let getDoubleValue :: TextCtrl () -> IO Double
                   getDoubleValue entr = do

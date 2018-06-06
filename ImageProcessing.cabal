@@ -42,6 +42,7 @@ executable ImageProcessing
       base,
       primitive ,
       matrix ,
+      filepath ,
       reactive-banana ,
       reactive-banana-wx ,
       wxcore,

@@ -11,6 +11,7 @@ import Control.Monad.Primitive
 import Data.Matrix
 import Data.Word
 
+
 rotate180 :: Image PixelRGB8 -> Image PixelRGB8
 rotate180 img@Image {..} = runST $ do
   mimg <- newMutableImage imageWidth imageHeight

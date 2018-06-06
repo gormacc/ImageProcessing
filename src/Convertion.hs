@@ -8,6 +8,7 @@ import Codec.Picture
 import Control.Monad
 import Control.Monad.ST
 import Codec.Picture.Types as J
+import System.FilePath.Posix
 
 convertToImage :: J.Image PixelRGB8 -> IO(W.Image ()) 
 convertToImage img@Image {..} = imageCreateFromPixels (sz imageWidth imageHeight) (createColorArray img imageWidth imageHeight)
@@ -42,3 +43,13 @@ prepareImageRGB8 array width height = generateImage generatorFunction width heig
    
 createPixelRGB8 :: Color -> PixelRGB8
 createPixelRGB8 color = PixelRGB8 ( fromIntegral $ colorRed color ) ( fromIntegral $ colorGreen color ) ( fromIntegral $ colorBlue color )
+
+
+saveImage :: W.Image () -> FilePath -> IO ()
+saveImage img filepath = do
+	jimg <- convertToImageRGB8 img
+	saveImg jimg (takeExtension filepath) where
+		saveImg :: J.Image PixelRGB8 -> String -> IO ()
+		saveImg img ".bmp" = saveBmpImage filepath (ImageRGB8 img)
+		saveImg img ".jpg" = saveJpgImage 100 filepath (ImageRGB8 img)
+		saveImg img  _     = savePngImage filepath (ImageRGB8 img) 
