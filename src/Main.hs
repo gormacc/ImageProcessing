@@ -92,7 +92,6 @@ imageViewer
        mir90  <- menuItem file []
        mir270 <- menuItem file []
        migray <- menuItem file []
-       --miprog <- menuItem file []
 
        -- create Toolbar
        tbar       <- toolBar f []
@@ -105,7 +104,6 @@ imageViewer
        tbarR180   <- toolMenu tbar mir180  "Rotate 180"  roimg []
        tbarR270   <- toolMenu tbar mir270  "Rotate 270"  roimg []
        tbarGray   <- toolMenu tbar migray  "Grayscale"  abimg []
-       --tbarProg   <- toolMenu tbar miprog  "Progressive" abimg []
 
        -- create statusbar field
        status <- statusField   [text := "Welcome to the wxHaskell ImageViewer"]
@@ -149,8 +147,6 @@ imageViewer
                         ]]
           ]
 
-        -- stack exec ImageProcessing
-
        -- set the statusbar, menubar, layout, and add menu item event handlers
        -- note: set the layout before the menubar!
        set f [layout           := row 10 [ column 5 [ vfill $ column 10 [widget p, widget pan, widget pa, widget pane]],
@@ -179,7 +175,6 @@ imageViewer
               eGrnM  <- event0 btnGM    command
               eBluP  <- event0 btnBP    command
               eBluM  <- event0 btnBM    command
-              --eProg  <- event0 tbarProg command
 
               let closeImage :: IO ()    
                   closeImage
@@ -430,31 +425,6 @@ imageViewer
                              actualizeImage newImg
 
               reactimate (onBlueDown <$ eBluM)
-
-              -- let onProgressiveRec :: J.Image PixelRGB8 -> Int -> IO ()
-              --     onProgressiveRec img partitioner 
-              --       = do retImg <- prepareProgressive img partitioner
-              --            case retImg of 
-              --              Nothing -> return ()
-              --              Just im -> do
-              --                wim <- convertToImage im
-              --                closeImage
-              --                set vimage [value := Just wim]
-              --                imsize <- get wim size
-              --                set sw [virtualSize := imsize]
-              --                repaint sw
-              --                onProgressiveRec img (partitioner * 2)
-
-              -- let onProgressive :: IO ()
-              --     onProgressive
-              --       = do mbImage <- swap vimage value Nothing
-              --            case mbImage of
-              --              Nothing -> return ()
-              --              Just im -> do
-              --                img <- convertToImageRGB8 im
-              --                onProgressiveRec img 1
-
-              -- reactimate (onProgressive <$ eProg)
 
        network <- compile networkDescription
        actuate network

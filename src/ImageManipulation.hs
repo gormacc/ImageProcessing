@@ -97,37 +97,6 @@ darken times = pixelMap darkFunction
             darkFunction (PixelRGB8 r g b) =
                     PixelRGB8 (toEnum (clamp (down r))) (toEnum (clamp (down g))) (toEnum(clamp (down b)))
 
-prepareProgressive :: Image PixelRGB8 -> Int -> IO(Maybe(Image PixelRGB8))
-prepareProgressive img@Image {..} partitioner
-    | ((partitioner > imageWidth) && (partitioner > imageHeight)) = return Nothing
-    | otherwise = do
-        stepX <- prepareStep imageWidth partitioner
-        stepY <- prepareStep imageHeight partitioner  
-        return $ Just $ runST $ do
-            mimg <- newMutableImage imageWidth imageHeight
-            let go xs ys xe ye
-                  | xe > imageWidth  = do
-                      prepareSquare mimg (pixelAt img xs ys) xs ys imageWidth ye
-                      go 0 ye stepX (ye+stepY)
-                  | ye > imageHeight = do
-                      prepareSquare mimg (pixelAt img xs ys) xs ys xe imageHeight
-                      go xe ys (xe + stepX) imageHeight
-                  | xe == imageWidth && ye == imageHeight = unsafeFreezeImage mimg
-                  | otherwise = do
-                      prepareSquare mimg (pixelAt img xs ys) xs ys xe ye 
-                      go xe ys (xe + stepX) ye
-            go 0 0 stepX stepY
-
---prepareSquare :: PrimMonad m => MutableImage (PrimState m) a -> PixelRGB8 -> Int -> Int -> Int -> Int -> IO ()
-prepareSquare mimg pixel xs ys xe ye = do 
-  let go x y
-        | x >= xe  = go xs (y + 1)
-        | y >= ye = return ()
-        | otherwise = do
-            writePixel mimg x y pixel
-            go (x + 1) y
-  go xs ys
-
 prepareStep :: Int -> Int -> IO (Int)
 prepareStep param part = do return $ truncate $ (fromIntegral param) / (fromIntegral part)
 
