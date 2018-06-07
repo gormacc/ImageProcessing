@@ -183,18 +183,20 @@ imageViewer
                              Nothing -> return ()
                              Just im -> objectDelete im >> return () 
               
+              let actualizeImage :: W.Image () -> IO ()
+                  actualizeImage newImg
+                      = do closeImage
+                           set vimage [value := Just newImg]
+                           imsize <- get newImg size
+                           set sw [virtualSize := imsize]
+                           repaint sw
+
               let openImage :: Prelude.FilePath -> IO ()
                   openImage fname
                       = do -- load the new bitmap
                           im <- imageCreateFromFile fname  -- can fail with exception
-                          closeImage
-                          set vimage [value := Just im]
-                          set mclose [enabled := True]
+                          actualizeImage im
                           set status [text := fname]
-                          -- reset the scrollbars 
-                          imsize <- get im size
-                          set sw [virtualSize := imsize]
-                          repaint sw
                       `onException` repaint sw
 
               let openClick :: IO ()
@@ -238,14 +240,6 @@ imageViewer
                       Nothing -> return 1
                       Just val -> return val
 
-              let actualizeImage :: W.Image () -> IO ()
-                  actualizeImage newImg
-                    = do closeImage
-                         set vimage [value := Just newImg]
-                         imsize <- get newImg size
-                         set sw [virtualSize := imsize]
-                         repaint sw
-              
               let manipulate :: (J.Image PixelRGB8 -> J.Image PixelRGB8) -> IO ()
                   manipulate fun
                     = do mbImage <- swap vimage value Nothing
