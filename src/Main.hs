@@ -10,7 +10,6 @@ import Reactive.Banana.Frameworks
 import Graphics.UI.WXCore as W
 import Codec.Picture as J
 import Text.Read (readMaybe)
-import Control.Monad (liftM)
 import Data.Matrix
 
 import Convertion 
@@ -227,7 +226,8 @@ imageProcesser
                              Nothing -> return ()
                              Just im -> saveImage im fname
                           
-              let saveClick :: IO ()
+              let -- | Run the save file dialog
+                  saveClick :: IO ()
                   saveClick
                     = do mbfname <- fileSaveDialog f False True "Save image" imageFiles "" ""
                          case mbfname of 
@@ -236,7 +236,9 @@ imageProcesser
 
               reactimate (saveClick <$ eSave)
               
-              let getDoubleValue :: TextCtrl () -> IO Double
+              let -- | Retreiving Double value from text entry, default value is 1
+                  getDoubleValue :: TextCtrl () -- ^ Text entry 
+                                 -> IO Double -- ^ Double value from entry
                   getDoubleValue entr = do
                     ent <- get entr text
                     db <- (return (readMaybe ent :: Maybe Double))
@@ -244,7 +246,9 @@ imageProcesser
                       Nothing -> return 1
                       Just val -> return val
 
-              let getIntValue :: TextCtrl () -> IO Int
+              let -- | Retreiving Int value from text entry, default value is 1
+                  getIntValue :: TextCtrl () -- ^ Text entry
+                              -> IO Int -- ^ Int value from entry
                   getIntValue entr = do
                     ent <- get entr text
                     db <- (return (readMaybe ent :: Maybe Int))
@@ -252,7 +256,9 @@ imageProcesser
                       Nothing -> return 1
                       Just val -> return val
 
-              let manipulate :: (J.Image PixelRGB8 -> J.Image PixelRGB8) -> IO ()
+              let -- | Apply given function to current image
+                  manipulate :: (J.Image PixelRGB8 -> J.Image PixelRGB8) -- ^ Function to apply on image
+                             -> IO ()
                   manipulate fun
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -262,25 +268,29 @@ imageProcesser
                              newImg <- convertToImage $ fun img
                              actualizeImage newImg
 
-              let onRotate90 :: IO ()
+              let -- | Rotate current image over 90 degrees
+                  onRotate90 :: IO ()
                   onRotate90
                     = do manipulate rotate90
 
               reactimate (onRotate90 <$ eR90)
 
-              let onRotate180 :: IO ()
+              let -- | Rotate current image over 180 degrees
+                  onRotate180 :: IO ()
                   onRotate180
                     = do manipulate rotate180
 
               reactimate (onRotate180 <$ eR180)
 
-              let onRotate270 :: IO ()
+              let -- | Rotate current image over 270 degrees
+                  onRotate270 :: IO ()
                   onRotate270
                     = do manipulate rotate270
 
               reactimate (onRotate270 <$ eR270)
 
-              let onScale :: IO ()
+              let -- | Scale current image with values entered in text entries
+                  onScale :: IO ()
                   onScale
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -294,13 +304,15 @@ imageProcesser
 
               reactimate (onScale <$ eScal)
 
-              let onGrayscale :: IO ()
+              let -- | Make current image to be in grey
+                  onGrayscale :: IO ()
                   onGrayscale
                     = do manipulate grayscale
 
               reactimate (onGrayscale <$ eGray)
 
-              let onBrighten :: IO ()
+              let -- | Brighten current image with value entered in text entry
+                  onBrighten :: IO ()
                   onBrighten
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -313,7 +325,8 @@ imageProcesser
 
               reactimate (onBrighten <$ eBrig)
 
-              let onDarken :: IO ()
+              let -- | Darken current image with value entered in text entry
+                  onDarken :: IO ()
                   onDarken
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -326,7 +339,8 @@ imageProcesser
 
               reactimate (onDarken <$ eDark)
               
-              let readMatrix :: IO(Matrix Int)
+              let -- | Function retreiving matrix from text entries
+                  readMatrix :: IO(Matrix Int) -- ^ Return matrix with values from entries, defaults 1 matrix
                   readMatrix = do
                     onon <- getIntValue fonon
                     ontw <- getIntValue fontw
@@ -341,7 +355,8 @@ imageProcesser
                                            twon, twtw, twth,
                                            thon, thtw, thth]
 
-              let onFilter :: IO ()
+              let -- | Apply filter matrix to current image
+                  onFilter :: IO ()
                   onFilter
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -354,7 +369,8 @@ imageProcesser
 
               reactimate (onFilter <$ eFilt)
 
-              let onRedUp :: IO ()
+              let -- | Increase red canal of the current image with value from text entry
+                  onRedUp :: IO ()
                   onRedUp
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -367,7 +383,8 @@ imageProcesser
 
               reactimate (onRedUp <$ eRedP)
 
-              let onRedDown :: IO ()
+              let -- | Decrease red canal of the current image with value from text entry
+                  onRedDown :: IO ()
                   onRedDown
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -380,7 +397,8 @@ imageProcesser
 
               reactimate (onRedDown <$ eRedM)
 
-              let onGreenUp :: IO ()
+              let -- | Increase green canal of the current image with value from text entry
+                  onGreenUp :: IO ()
                   onGreenUp
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -393,7 +411,8 @@ imageProcesser
 
               reactimate (onGreenUp <$ eGrnP)
 
-              let onGreenDown :: IO ()
+              let -- | Decrease green canal of the current image with value from text entry
+                  onGreenDown :: IO ()
                   onGreenDown
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -406,7 +425,8 @@ imageProcesser
 
               reactimate (onGreenDown <$ eGrnM)
 
-              let onBlueUp :: IO ()
+              let -- | Increase blue canal of the current image with value from text entry
+                  onBlueUp :: IO ()
                   onBlueUp
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -419,7 +439,8 @@ imageProcesser
 
               reactimate (onBlueUp <$ eBluP)
 
-              let onBlueDown :: IO ()
+              let -- | Decrease blue canal of the current image with value from text entry
+                  onBlueDown :: IO ()
                   onBlueDown
                     = do mbImage <- swap vimage value Nothing
                          case mbImage of
@@ -432,10 +453,12 @@ imageProcesser
 
               reactimate (onBlueDown <$ eBluM)
 
+       -- apply all reactive dependencies to being listened
        network <- compile networkDescription
        actuate network
 
        where 
+          -- | Repaint current image
           onPaint vimage dc _viewArea
             = do mbImage <- get vimage value
                  case mbImage of
