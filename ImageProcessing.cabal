@@ -1,13 +1,12 @@
 name:                ImageProcessing
 version:             0.1.0.0
--- synopsis:
--- description:
-homepage:            https://github.com/githubuser/ImageProcessing#readme
+description:         Application to open and process images.
+homepage:            https://github.com/gormacc/ImageProcessing#readme
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
+author:              Maciej Gorczyca
 maintainer:          example@example.com
-copyright:           2018 Author name here
+copyright:           2018 Maciej Gorczyca
 category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
@@ -21,7 +20,7 @@ data-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/ImageProcessing
+  location: https://github.com/gormacc/ImageProcessing
 
 executable ImageProcessing
   hs-source-dirs:      src
@@ -38,6 +37,6 @@ executable ImageProcessing
       matrix ,
       filepath ,
       reactive-banana ,
-      reactive-banana-wx ,
+      reactive-banana-wx,
       wxcore,
       wx
