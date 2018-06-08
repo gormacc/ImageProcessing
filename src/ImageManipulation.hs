@@ -168,16 +168,28 @@ fromJust (Just a) = a
 fromJust Nothing = pixelZero
 
 -- | Apply filter values to given pixel
-preparePixel :: Int -> Int -> Int -> Int -> PixelRGB8
+preparePixel :: Int -- ^ Sum of the values on red canal
+             -> Int -- ^ Sum of the values on green canal
+             -> Int -- ^ Sum of the values on blue canal
+             -> Int -- ^ Sum of the values on red canal
+             -> PixelRGB8 -- ^ New pixel
 preparePixel r g b f = PixelRGB8 (preparePixelColor r f) (preparePixelColor g f) (preparePixelColor b f)
 
-preparePixelColor :: Int -> Int -> Word8
+-- | Divide color int value with second value
+preparePixelColor :: Int -- ^ Given color value in integer
+                  -> Int -- ^ Given divider
+                  -> Word8 -- ^ Color value in bits
 preparePixelColor col f = toEnum $ clamp $ truncate $ ((fromIntegral col) / (fromIntegral f)) 
 
+-- | Pixel with 0 values in colors
 pixelZero :: PixelRGB8
 pixelZero = PixelRGB8 0 0 0
 
-takePixel :: Image PixelRGB8 -> Int -> Int -> Maybe PixelRGB8
+-- | Retreive pixel from image, if out of bounds returns Nothing
+takePixel :: Image PixelRGB8 -- ^ Given image
+          -> Int -- ^ X position of pixel
+          -> Int -- ^ Y position of pixel
+          -> Maybe PixelRGB8 -- ^ Value of pixel in X, Y position
 takePixel img@Image {..} x y 
   | x < 0 = Nothing
   | y < 0 = Nothing
@@ -185,49 +197,77 @@ takePixel img@Image {..} x y
   | y >= imageHeight = Nothing
   | otherwise = Just $ pixelAt img x y
 
-takeValFromMatrix :: Matrix Int -> Int -> Int -> Int
+-- | Retreive value from matrix
+takeValFromMatrix :: Matrix Int -- ^ Given matrix 
+                  -> Int -- ^ Row position of value
+                  -> Int -- ^ Column position of value
+                  -> Int -- ^ Value being searched
 takeValFromMatrix matrix x y = getElem (x+1) (y+1) matrix
 
-takeRed :: PixelRGB8 -> Int
+-- | Take red canal from pixel
+takeRed :: PixelRGB8 -- ^ Given pixel
+        -> Int -- ^ Color value in integer
 takeRed (PixelRGB8 r g b) = fromEnum r
 
-takeGreen :: PixelRGB8 -> Int
+-- | Take green canal from pixel
+takeGreen :: PixelRGB8 -- ^ Given pixel
+          -> Int -- ^ Color value in integer
 takeGreen (PixelRGB8 r g b) = fromEnum g
 
-takeBlue :: PixelRGB8 -> Int
+-- | Take blue canal from pixel
+takeBlue :: PixelRGB8 -- ^ Given pixel
+         -> Int -- ^ Color value int integer
 takeBlue (PixelRGB8 r g b) = fromEnum b
 
-addRedCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+-- | Increase red canal of pixel
+addRedCanal :: Int -- ^ Increase value 
+            -> Image PixelRGB8 -- ^ Given pixel 
+            -> Image PixelRGB8 -- ^ Increased red canal pixel
 addRedCanal times = pixelMap redCanalFunction
       where up v = (fromEnum v) + times
             redCanalFunction (PixelRGB8 r g b) = 
                     PixelRGB8 (toEnum (clamp (up r))) g b
 
-removeRedCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+-- | Decrease red canal of pixel
+removeRedCanal :: Int -- ^ Decrease value
+               -> Image PixelRGB8 -- ^ Given pixel
+               -> Image PixelRGB8 -- ^ Decreased red canal pixel
 removeRedCanal times = pixelMap redCanalFunction
       where up v = (fromEnum v) - times
             redCanalFunction (PixelRGB8 r g b) = 
                     PixelRGB8 (toEnum (clamp (up r))) g b
 
-addGreenCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+-- | Increase green canal of pixel
+addGreenCanal :: Int -- ^ Increase value 
+              -> Image PixelRGB8 -- ^ Given pixel 
+              -> Image PixelRGB8 -- ^ Increased green canal pixel
 addGreenCanal times = pixelMap greenCanalFunction
       where up v = (fromEnum v) + times
             greenCanalFunction (PixelRGB8 r g b) = 
                     PixelRGB8 r (toEnum (clamp (up g))) b
 
-removeGreenCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+-- | Decrease green canal of pixel
+removeGreenCanal :: Int -- ^ Decrease value
+                 -> Image PixelRGB8 -- ^ Given pixel
+                 -> Image PixelRGB8 -- ^ Decreased green canal pixel
 removeGreenCanal times = pixelMap greenCanalFunction
       where up v = (fromEnum v) - times
             greenCanalFunction (PixelRGB8 r g b) = 
                     PixelRGB8 r (toEnum (clamp (up g))) b
 
-addBlueCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+-- | Increase blue canal of pixel
+addBlueCanal :: Int -- ^ Increase value 
+             -> Image PixelRGB8 -- ^ Given pixel 
+             -> Image PixelRGB8 -- ^ Increased blue canal pixel
 addBlueCanal times = pixelMap blueCanalFunction
       where up v = (fromEnum v) + times
             blueCanalFunction (PixelRGB8 r g b) = 
                     PixelRGB8 r g (toEnum (clamp (up b)))
 
-removeBlueCanal :: Int -> Image PixelRGB8 -> Image PixelRGB8
+-- | Decrease blue canal of pixel             
+removeBlueCanal :: Int -- ^ Decrease value
+                -> Image PixelRGB8 -- ^ Given pixel
+                -> Image PixelRGB8 -- ^ Decreased blue canal pixel
 removeBlueCanal times = pixelMap blueCanalFunction
       where up v = (fromEnum v) - times
             blueCanalFunction (PixelRGB8 r g b) = 
