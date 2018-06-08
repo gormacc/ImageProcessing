@@ -11,10 +11,11 @@ import Control.Monad.Primitive
 import Data.Matrix
 import Data.Word
 
--- | Rotate give image with 180 degrees
+-- | Rotate given image with 180 degrees
 rotate180 :: Image PixelRGB8 -- ^ Given image
-          -> Image PixelRGB8 -- ^ Rotate image
+          -> Image PixelRGB8 -- ^ Rotated image
 rotate180 img@Image {..} = runST $ do
+  -- create mutable image to write new pixels
   mimg <- newMutableImage imageWidth imageHeight
   let go x y
         | x >= imageWidth  = go 0 (y + 1)
@@ -27,8 +28,11 @@ rotate180 img@Image {..} = runST $ do
             go (x + 1) y
   go 0 0
 
-rotate90 :: Image PixelRGB8 -> Image PixelRGB8
+-- | Rotate given image with 90 degrees
+rotate90 :: Image PixelRGB8 -- ^ Given image
+         -> Image PixelRGB8 -- ^ Rotated image
 rotate90 img@Image {..} = runST $ do
+  -- create mutable image to write new pixels
   mimg <- newMutableImage imageHeight imageWidth
   let go x y
         | x >= imageWidth  = go 0 (y + 1)
@@ -41,8 +45,11 @@ rotate90 img@Image {..} = runST $ do
             go (x + 1) y
   go 0 0
 
-rotate270 :: Image PixelRGB8 -> Image PixelRGB8
+ -- | Rotate given image with 270 degrees 
+rotate270 :: Image PixelRGB8 -- ^ Given image
+          -> Image PixelRGB8 -- ^ Rotated image
 rotate270 img@Image {..} = runST $ do
+  -- create mutable image to write new pixels
   mimg <- newMutableImage imageHeight imageWidth
   let go x y
         | x >= imageWidth  = go 0 (y + 1)
@@ -55,9 +62,14 @@ rotate270 img@Image {..} = runST $ do
             go (x + 1) y
   go 0 0
 
-scale :: Double -> Double -> Image PixelRGB8 -> Image PixelRGB8
+-- | Scale given image with given values
+scale :: Double -- ^ Scale value to X direction
+      -> Double -- ^ Scale value to Y direction
+      -> Image PixelRGB8 -- ^ Given image
+      -> Image PixelRGB8 -- ^ Scaled image
 scale scaleX scaleY img@Image {..} = do
   runST $ do
+    -- create mutable image to write new pixels
     mimg <- newMutableImage (myRound imageWidth scaleX) (myRound imageHeight scaleY)
     let newImageWidth = myRound imageWidth scaleX
         newImageHeight = myRound imageHeight scaleY
@@ -72,37 +84,54 @@ scale scaleX scaleY img@Image {..} = do
               go (x + 1) y
     go 0 0
 
-myRound :: Int -> Double -> Int
+-- | Round integer value multiplied with non-integer value
+myRound :: Int -- ^ Given integer value
+        -> Double -- ^ Double scale value
+        -> Int -- ^ Scaled integer value
 myRound val sc = truncate $ sc * (fromIntegral val)
 
-revertMyRound :: Int -> Double -> Int
+-- | Round integer value divided with non-integer value
+revertMyRound :: Int -- ^ Given integer value 
+              -> Double -- ^ Double scale value
+              -> Int -- ^ Scaled integer value
 revertMyRound val sc = truncate $ (fromIntegral val) / sc
 
-grayscale :: Image PixelRGB8 -> Image PixelRGB8
+-- | Convert given image to grey colors
+grayscale :: Image PixelRGB8 -- ^ Given image 
+          -> Image PixelRGB8 -- ^ Converted image
 grayscale = pixelMap grayFunction where
   grayFunction (PixelRGB8 r g b) = PixelRGB8 (toEnum val) (toEnum val) (toEnum val) where
     val = truncate ( ( (toRational r) + (toRational g) + (toRational b)) / 3) 
 
-clamp :: Int -> Int
+-- | Limit givent integer value to minimum 0 and maximum 255 value
+clamp :: Int -- ^ Given value
+      -> Int -- ^ Limited value
 clamp val = max 0 $ min 255 val
 
-brighten :: Int -> Image PixelRGB8 -> Image PixelRGB8
+-- | Brighten given image with given value
+brighten :: Int -- ^ Given value
+         -> Image PixelRGB8 -- ^ Given image
+         -> Image PixelRGB8 -- ^ Brightened image
 brighten times = pixelMap brightFunction
       where up v =  (fromEnum v) + times
             brightFunction (PixelRGB8 r g b) =
                     PixelRGB8 (toEnum (clamp (up r))) (toEnum (clamp (up g))) (toEnum (clamp (up b)))
 
-darken :: Int -> Image PixelRGB8 -> Image PixelRGB8
+-- | Darken given image with given value
+darken :: Int -- ^ Given value 
+       -> Image PixelRGB8 -- ^ Given image
+       -> Image PixelRGB8 -- ^ Darkened image
 darken times = pixelMap darkFunction
       where down v = (fromEnum v ) - times
             darkFunction (PixelRGB8 r g b) =
                     PixelRGB8 (toEnum (clamp (down r))) (toEnum (clamp (down g))) (toEnum(clamp (down b)))
 
-prepareStep :: Int -> Int -> IO (Int)
-prepareStep param part = do return $ truncate $ (fromIntegral param) / (fromIntegral part)
-
-imageFilter :: Image PixelRGB8 -> Matrix Int -> Image PixelRGB8
+-- | Filter given image with given matrix
+imageFilter :: Image PixelRGB8 -- ^ Given image 
+            -> Matrix Int -- ^ Given filter matrix
+            -> Image PixelRGB8 -- ^ Filtered image
 imageFilter img@Image {..} matrix = runST $ do
+  -- create mutable image to write new pixels
   mimg <- newMutableImage imageWidth imageHeight 
   let go x y
         | x >= imageWidth  = go 0 (y + 1)
@@ -112,7 +141,12 @@ imageFilter img@Image {..} matrix = runST $ do
             go (x + 1) y
   go 0 0
 
-prepareFilterPixel :: Image PixelRGB8 -> Matrix Int -> Int -> Int -> PixelRGB8
+-- | Apply Filter matrix to given pixel
+prepareFilterPixel :: Image PixelRGB8 -- ^ Given pixel
+                   -> Matrix Int -- ^ Filter matrix
+                   -> Int -- ^ X position of given pixel
+                   -> Int -- ^ Y position of given pixel
+                   -> PixelRGB8 -- ^ Filtered pixel
 prepareFilterPixel img matrix w h = go 0 0 0 0 0 0 where
   go x y sumR sumG sumB sumF
     | x >= 3  = go 0 (y + 1) sumR sumG sumB sumF
@@ -127,11 +161,13 @@ prepareFilterPixel img matrix w h = go 0 0 0 0 0 0 where
       newSumB = sumB + ((takeBlue pixelVal) * val)
       newSumF = sumF + (takeValFromMatrix matrix x y)
 
-
-fromJust :: Maybe PixelRGB8 -> PixelRGB8
+-- | Retreive value from maybe monda
+fromJust :: Maybe PixelRGB8 -- ^ Given pixel in maybe monad 
+         -> PixelRGB8 -- ^ Value from maybe monad in default Pixel 0 0 0
 fromJust (Just a) = a
 fromJust Nothing = pixelZero
 
+-- | Apply filter values to given pixel
 preparePixel :: Int -> Int -> Int -> Int -> PixelRGB8
 preparePixel r g b f = PixelRGB8 (preparePixelColor r f) (preparePixelColor g f) (preparePixelColor b f)
 
