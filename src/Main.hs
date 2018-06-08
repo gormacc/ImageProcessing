@@ -19,9 +19,9 @@ import ImageManipulation
 
 main :: IO ()
 main
-  = start imageViewer
+  = start imageProcesser
 
--- Specify image files for the file open dialog.
+-- | Specify image files for the file open and save dialog.
 imageFiles :: [(String, [String])]
 imageFiles
    = [("Image files",["*.bmp","*.jpg","*.png"])
@@ -31,21 +31,35 @@ imageFiles
      ]
 
 
--- The image viewer.
-imageViewer :: IO ()
-imageViewer
-  = do -- the main frame, we use 'fullRepaintOnResize' to prevent flicker on resize
+-- | Setting all GUI
+imageProcesser :: IO ()
+imageProcesser
+  = do
+       -- window frame of the application    
        image_ <- getDataFileName "bitmaps/eye.ico"
        f      <- frame [text := "ImageViewer", picture := image_, fullRepaintOnResize := False]
 
-       -- use a mutable variable to hold the image
+       -- mutable variable representing shown image
        vimage <- variable [value := Nothing]
 
-       -- add a scrollable window widget in the frame
+       -- enable to scroll our window
        sw     <- scrolledWindow f [scrollRate := sz 10 10, on paint := onPaint vimage
                                   ,bgcolor := white, fullRepaintOnResize := False]
 
-       -- filter matrix
+       -- panel containing scale values and button
+       p      <- panel f []
+       scinx  <- entry p []
+       sciny  <- entry p []
+       btnSc  <- button p [ text := "Scale" ]
+
+       -- panel containing darken brighten values and buttons
+       pan    <- panel f []
+       darkE  <- entry pan []
+       brigE  <- entry pan []
+       btnDa  <- button pan [ text := "Darken" ]
+       btnBr  <- button pan [ text := "Brighten" ]
+
+       -- panel containing image filter entries and button
        pa     <- panel f []
        fonon  <- entry pa []
        fontw  <- entry pa []
@@ -57,21 +71,8 @@ imageViewer
        fthtw  <- entry pa []
        fthth  <- entry pa []
        btnFi  <- button pa [ text := "Use filter" ]
-       
-       -- scale input entries
-       p      <- panel f []
-       scinx  <- entry p []
-       sciny  <- entry p []
-       btnSc  <- button p [ text := "Scale" ]
 
-       -- darken brighten inputs
-       pan    <- panel f []
-       darkE  <- entry pan []
-       brigE  <- entry pan []
-       btnDa  <- button pan [ text := "Darken" ]
-       btnBr  <- button pan [ text := "Brighten" ]
-
-       -- przeksztalcanie kazdego kanalu
+       -- panel containing color canals entries and buttons
        pane   <- panel f []
        redE   <- entry pane []
        btnRP  <- button pane [ text := "Up" ]
@@ -83,7 +84,7 @@ imageViewer
        btnBP  <- button pane [ text := "Up" ]
        btnBM  <- button pane [ text := "Down" ]
 
-       -- elements of Toolbar
+       -- creating elements to hold them in toolbar
        file   <- menuPane      []
        mclose <- menuItem file []
        open   <- menuItem file []
@@ -93,7 +94,7 @@ imageViewer
        mir270 <- menuItem file []
        migray <- menuItem file []
 
-       -- create Toolbar
+       -- creating toolbar elements
        tbar       <- toolBar f []
        foimg      <- getDataFileName "bitmaps/fileopen16.png"
        abimg      <- getDataFileName "bitmaps/wxwin16.png"
@@ -109,7 +110,6 @@ imageViewer
        status <- statusField   [text := "Welcome to the wxHaskell ImageViewer"]
 
        -- set panel for scale inputs
-
        set p [layout := margin 10 $
             row 1 [
                 grid 1 1 [  [label "ScaleX:", widget scinx],
@@ -118,6 +118,7 @@ imageViewer
                          ]]
             ]
 
+       -- set panel for darken and brighten inputs
        set pan [layout := margin 10 $
             column 1 [
                 grid 1 1 [  [label "Darken:", widget darkE],
@@ -126,6 +127,7 @@ imageViewer
                           ]]
             ]
 
+       -- set panel for image filter inputs
        set pa [layout := margin 10 $
           row 1 [
               grid 1 1 [  [label "Image filter:", label "", label ""],
@@ -136,6 +138,7 @@ imageViewer
                       ]]
           ]
 
+       -- set panel for color canals inputs
        set pane [layout := margin 10 $ 
           row 1 [
               grid 1 1 [  [label "Red canal:", widget redE],
@@ -147,18 +150,19 @@ imageViewer
                         ]]
           ]
 
-       -- set the statusbar, menubar, layout, and add menu item event handlers
-       -- note: set the layout before the menubar!
+       -- set panels, toolbar, status bar in frame
        set f [layout           := row 10 [ column 5 [ vfill $ column 10 [widget p, widget pan, widget pa, widget pane]],
                                            column 5 [ fill $ widget sw]
                                          ]
              ,statusBar        := [status]
              ,outerSize        := sz 800 600  
              ]
-        
+     
+       -- | Declaring all reactive dependencies
        let networkDescription :: MomentIO ()
            networkDescription = mdo
 
+              -- initializing all reactive event handlers
               eOpen  <- event0 tbarOpen command
               eSave  <- event0 tbarSave command 
               eR90   <- event0 tbarR90  command
@@ -176,14 +180,19 @@ imageViewer
               eBluP  <- event0 btnBP    command
               eBluM  <- event0 btnBM    command
 
-              let closeImage :: IO ()    
+                  
+              let -- | Deleting current image
+                  closeImage :: IO ()    
                   closeImage
                       = do mbImage <- swap vimage value Nothing
                            case mbImage of
                              Nothing -> return ()
                              Just im -> objectDelete im >> return () 
               
-              let actualizeImage :: W.Image () -> IO ()
+                   
+              let -- | Setting generated image
+                  actualizeImage :: W.Image () -- ^ New image to set
+                                 -> IO ()
                   actualizeImage newImg
                       = do closeImage
                            set vimage [value := Just newImg]
@@ -191,24 +200,27 @@ imageViewer
                            set sw [virtualSize := imsize]
                            repaint sw
 
-              let openImage :: Prelude.FilePath -> IO ()
+              let -- | Set image from given filepath
+                  openImage :: Prelude.FilePath -> IO ()
                   openImage fname
-                      = do -- load the new bitmap
-                          im <- imageCreateFromFile fname  -- can fail with exception
-                          actualizeImage im
-                          set status [text := fname]
+                      = do im <- imageCreateFromFile fname
+                           actualizeImage im
+                           set status [text := fname]
                       `onException` repaint sw
 
-              let openClick :: IO ()
+              let -- | Run the file open dialog
+                  openClick :: IO ()
                   openClick 
-                    = do mbfname <- fileOpenDialog f False {- change current directory -} True "Open image" imageFiles "" ""
+                    = do mbfname <- fileOpenDialog f False True "Open image" imageFiles "" ""
                          case mbfname of
                            Nothing    -> return ()
                            Just fname -> openImage fname
 
               reactimate (openClick <$ eOpen)
 
-              let saveVimage :: FilePath -> IO ()
+              let -- | Saving current image to given filepath location
+                  saveVimage :: FilePath -- ^ Filepath given to  
+                             -> IO ()
                   saveVimage fname
                       = do mbImage <- swap vimage value Nothing
                            case mbImage of
