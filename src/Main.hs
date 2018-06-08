@@ -36,7 +36,7 @@ imageProcesser
   = do
        -- window frame of the application    
        image_ <- getDataFileName "bitmaps/eye.ico"
-       f      <- frame [text := "ImageViewer", picture := image_, fullRepaintOnResize := False]
+       f      <- frame [text := "ImageProcessing", picture := image_, fullRepaintOnResize := False]
 
        -- mutable variable representing shown image
        vimage <- variable [value := Nothing]
