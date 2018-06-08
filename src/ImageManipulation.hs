@@ -45,7 +45,7 @@ rotate90 img@Image {..} = runST $ do
             go (x + 1) y
   go 0 0
 
- -- | Rotate given image with 270 degrees 
+-- | Rotate given image with 270 degrees 
 rotate270 :: Image PixelRGB8 -- ^ Given image
           -> Image PixelRGB8 -- ^ Rotated image
 rotate270 img@Image {..} = runST $ do
